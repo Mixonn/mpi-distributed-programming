@@ -4,15 +4,36 @@
 #include <cstdlib>
 
 using namespace std;
-struct node {
+class Node {
+public:
     int clk;
     int tid;
-    struct node *next_node;
+    Node *next_node;
+
+    bool operator<(const Node &to_compare) const {
+        if (clk < to_compare.clk)
+            return true;
+        if (to_compare.clk < clk)
+            return false;
+        return tid < to_compare.tid;
+    }
+
+    bool operator>(const Node &to_compare) const {
+        return to_compare < *this;
+    }
+
+    bool operator<=(const Node &to_compare) const {
+        return !(to_compare < *this);
+    }
+
+    bool operator>=(const Node &to_compare) const {
+        return !(*this < to_compare);
+    }
 };
 
 class Priority_Queue {
 private:
-    node *front;
+    Node *front;
     int size = 0;
 public:
     Priority_Queue() {
@@ -20,25 +41,61 @@ public:
     }
 
     ~Priority_Queue() {
-        node *curr = front;
+        Node *curr = front;
         while (curr != nullptr) {
-            node *next = curr->next_node;
+            Node *next = curr->next_node;
             free(curr); //is this correct?
             curr = next;
         }
     }
 
-    void insert(node *node_to_add) {
-        //todo
+    void insert(Node *node_to_add) {
         size++;
+        if(front == nullptr){
+            front = node_to_add;
+            return;
+        }
+        if(front > node_to_add){
+            Node *tmp = front;
+            front = node_to_add;
+            node_to_add->next_node = tmp;
+            return;
+        }
+        Node *next = front;
+        while(next->next_node != nullptr && next->next_node < node_to_add){
+            next = next->next_node;
+        }
+        if(next->next_node == nullptr){
+            next->next_node = node_to_add;
+        } else {
+            Node *tmp = next->next_node;
+            next->next_node = node_to_add;
+            node_to_add->next_node = tmp;
+        }
     }
 
     void remove_node(int tid) {
-        //todo
-        size--;
+        Node *next = front;
+        while(next != nullptr && next->tid != tid){
+            next = next->next_node;
+        }
+        if(next == nullptr){
+            //prnt no tid found
+        } else {
+            size--;
+            //todo implement
+        }
     }
 
     int get_size() {
         return size;
+    }
+
+    void setFront(Node *new_front) {
+        Priority_Queue::front = new_front;
+    }
+
+    Node *getFront() const {
+        return front;
     }
 };
