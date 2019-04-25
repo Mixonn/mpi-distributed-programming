@@ -5,55 +5,11 @@
 #include <string>
 #include <iostream>
 #include "Queue.cpp"
+#include "Packet.cpp"
 
 pthread_mutex_t mutex;
 pthread_mutex_t mutexClock;
 sem_t semaphore;
-
-class Packet {
-public:
-    int clock_d;
-    int type;
-    int message;
-    int tid;
-    int requestType;
-
-    std::string to_string() {
-        return "clk: " + std::to_string(clock_d) + " type: " + std::to_string(type) + " message: " + std::to_string(message) + " tid: "
-           + std::to_string(tid) + " requestType: " + std::to_string(requestType);
-    }
-};
-
-class Node {
-public:
-    int tid;
-    int clock_d;
-    Node * lesser;
-    Node * greater;
-
-    void insert_with_order(Node* node_to_add){
-
-    }
-};
-
-Node* head = nullptr;
-void add_with_order_to_queue(Node* queue_head, Node* node_to_add) {
-    Node* current_node = queue_head;
-    while(current_node != nullptr){
-        if(current_node->clock_d == node_to_add->clock_d){
-            if(current_node->tid < node_to_add->tid){
-                Node* tmpNext = current_node->next;
-                current_node->next = node_to_add;
-                node_to_add->next = tmpNext;
-            } else {
-
-            }
-        }
-    }
-    new_node->tid =
-    new_node->next = head;
-    head = new_node;
-}
 
 int clock_d = 0;
 int myTid;
@@ -125,7 +81,7 @@ int main(int argc, char** argv) {
     pthread_t threadId;
     pthread_create(&threadId, &attr, send_loop, nullptr);
 
-    Packet* packet = new Packet();
+    auto* packet = new Packet();
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
