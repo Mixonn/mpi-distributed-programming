@@ -4,4 +4,5 @@ add_executable(Pyrkon pyrkon.cpp)
 ADD_LIBRARY(LibsModule
         Queue.cpp
         Packet.cpp
+        QueueTest.cpp
         )

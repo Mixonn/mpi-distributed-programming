@@ -13,11 +13,16 @@
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
 using namespace std;
+
 class Node {
 public:
     int clk;
     int tid;
     Node *next_node;
+
+    std::string to_string() {
+        return "clk: " + std::to_string(clk) + " tid: " + std::to_string(tid);
+    }
 
     bool operator<(const Node &to_compare) const {
         if (clk < to_compare.clk)
@@ -58,23 +63,23 @@ public:
         }
     }
 
-    void insert(Node *node_to_add) {
+    void put(Node *node_to_add) {
         size++;
-        if(front == nullptr){
+        if (front == nullptr) {
             front = node_to_add;
             return;
         }
-        if(front > node_to_add){
+        if (*front > *node_to_add) {
             Node *tmp = front;
             front = node_to_add;
             node_to_add->next_node = tmp;
             return;
         }
         Node *next = front;
-        while(next->next_node != nullptr && next->next_node < node_to_add){
+        while (next->next_node != nullptr && *(next->next_node) < *node_to_add) {
             next = next->next_node;
         }
-        if(next->next_node == nullptr){
+        if (next->next_node == nullptr) {
             next->next_node = node_to_add;
         } else {
             Node *tmp = next->next_node;
@@ -83,20 +88,34 @@ public:
         }
     }
 
-    void remove_node(int tid) {
+    void pop(int tid) {
         Node *next = front;
         Node *previous = nullptr;
 
-        while(next != nullptr && next->tid != tid){
+        while (next != nullptr && next->tid != tid) {
             previous = next;
             next = next->next_node;
         }
-        if(next == nullptr){
+        if (next == nullptr) {
             printf("%sCannot find node with %d process id%s", ANSI_COLOR_RED, tid, ANSI_COLOR_RESET);
         } else {
+            if (previous == nullptr) {
+                front = nullptr;
+            } else {
+                previous->next_node = next->next_node;
+            }
             size--;
-            previous->next_node = next->next_node;
         }
+    }
+
+    std::string to_string() {
+        std::string result = "Size: " + std::to_string(size) + "\r\n";
+        Node *next = front;
+        while (next != nullptr) {
+            result.append(next->to_string() + "\r\n");
+            next = next->next_node;
+        }
+        return result;
     }
 
     int get_size() {
