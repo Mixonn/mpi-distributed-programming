@@ -15,7 +15,7 @@ int clock_d = 0;
 int myTid;
 int world_size;
 
-void recive(Packet *packet){
+void receive(Packet *packet){
     MPI_Status status;
     int vector[5];
 
@@ -39,24 +39,30 @@ void recive(Packet *packet){
            myTid, clock_d-1, packet->to_string().c_str());
 }
 
-void send_to_tid(int receiver, int type, int message, int requestType, int setClock){
-    int vector[5] = {setClock, type, message, myTid, requestType};
+void send_to_tid(int receiver, int type, int message, int requestType, int sent_clk){
+    int vector[5] = {sent_clk, type, message, myTid, requestType};
+    printf("[ID:%d][CLK:%d]\tSend message to [%d]\n",
+           myTid, sent_clk, receiver);
     MPI_Request req;
     MPI_Isend(vector, 5, MPI_INT, receiver, receiver, MPI_COMM_WORLD, &req);
+}
+
+void send_to_all(int type, int message, int requestType, int sent_clk){
+    for(int i=0; i<world_size; i++){
+        send_to_tid(i, type, message, requestType, sent_clk);
+    }
 }
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
 void* send_loop(void *id){
     while(true){
-        send_to_tid(myTid, 1, myTid, 1, clock_d);
+        send_to_all(1, myTid, 1, clock_d);
 
         pthread_mutex_lock(&mutexClock);
         clock_d++;
-        pthread_mutex_unlock(&mutexClock);
 
-        printf("[ID:%d][CLK:%d]\tSend message to [%d]\n",
-               myTid, clock_d, myTid);
+        pthread_mutex_unlock(&mutexClock);
         sleep(5);
     }
 }
@@ -86,7 +92,7 @@ int main(int argc, char** argv) {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
     while(true) {
-        recive(packet);
+        receive(packet);
     }
 #pragma clang diagnostic pop
 
