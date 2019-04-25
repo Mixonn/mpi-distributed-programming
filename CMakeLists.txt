@@ -5,4 +5,5 @@ ADD_LIBRARY(LibsModule
         Queue.cpp
         Packet.cpp
         QueueTest.cpp
+        Log.cpp
         )

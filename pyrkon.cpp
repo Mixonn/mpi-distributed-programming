@@ -35,7 +35,7 @@ void recive(Packet *packet){
     packet->tid = vector[3];
     packet->requestType = vector[4];
 
-    printf("[%d][%d]\tRecived message: %s\n",
+    printf("[ID:%d][CLK:%d]\tRecived message: %s\n",
            myTid, clock_d-1, packet->to_string().c_str());
 }
 
@@ -55,7 +55,7 @@ void* send_loop(void *id){
         clock_d++;
         pthread_mutex_unlock(&mutexClock);
 
-        printf("[%d][%d]\tSend message to [%d]\n",
+        printf("[ID:%d][CLK:%d]\tSend message to [%d]\n",
                myTid, clock_d, myTid);
         sleep(5);
     }
