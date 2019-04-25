@@ -2,6 +2,15 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
+#include <stdio.h>
+
+#define ANSI_COLOR_RED     "\x1b[31m"
+#define ANSI_COLOR_GREEN   "\x1b[32m"
+#define ANSI_COLOR_YELLOW  "\x1b[33m"
+#define ANSI_COLOR_BLUE    "\x1b[34m"
+#define ANSI_COLOR_MAGENTA "\x1b[35m"
+#define ANSI_COLOR_CYAN    "\x1b[36m"
+#define ANSI_COLOR_RESET   "\x1b[0m"
 
 using namespace std;
 class Node {
@@ -76,14 +85,17 @@ public:
 
     void remove_node(int tid) {
         Node *next = front;
+        Node *previous = nullptr;
+
         while(next != nullptr && next->tid != tid){
+            previous = next;
             next = next->next_node;
         }
         if(next == nullptr){
-            //prnt no tid found
+            printf("%sCannot find node with %d process id%s", ANSI_COLOR_RED, tid, ANSI_COLOR_RESET);
         } else {
             size--;
-            //todo implement
+            previous->next_node = next->next_node;
         }
     }
 
