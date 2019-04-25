@@ -4,6 +4,7 @@
 #include <semaphore.h>
 #include <string>
 #include <iostream>
+#include "Queue.cpp"
 
 pthread_mutex_t mutex;
 pthread_mutex_t mutexClock;
@@ -16,7 +17,43 @@ public:
     int message;
     int tid;
     int requestType;
+
+    std::string to_string() {
+        return "clk: " + std::to_string(clock_d) + " type: " + std::to_string(type) + " message: " + std::to_string(message) + " tid: "
+           + std::to_string(tid) + " requestType: " + std::to_string(requestType);
+    }
 };
+
+class Node {
+public:
+    int tid;
+    int clock_d;
+    Node * lesser;
+    Node * greater;
+
+    void insert_with_order(Node* node_to_add){
+
+    }
+};
+
+Node* head = nullptr;
+void add_with_order_to_queue(Node* queue_head, Node* node_to_add) {
+    Node* current_node = queue_head;
+    while(current_node != nullptr){
+        if(current_node->clock_d == node_to_add->clock_d){
+            if(current_node->tid < node_to_add->tid){
+                Node* tmpNext = current_node->next;
+                current_node->next = node_to_add;
+                node_to_add->next = tmpNext;
+            } else {
+
+            }
+        }
+    }
+    new_node->tid =
+    new_node->next = head;
+    head = new_node;
+}
 
 int clock_d = 0;
 int myTid;
@@ -41,6 +78,9 @@ void recive(Packet *packet){
     packet->message = vector[2];
     packet->tid = vector[3];
     packet->requestType = vector[4];
+
+    printf("[%d][%d]\tRecived message: %s\n",
+           myTid, clock_d-1, packet->to_string().c_str());
 }
 
 void send_to_tid(int receiver, int type, int message, int requestType, int setClock){
@@ -49,19 +89,22 @@ void send_to_tid(int receiver, int type, int message, int requestType, int setCl
     MPI_Isend(vector, 5, MPI_INT, receiver, receiver, MPI_COMM_WORLD, &req);
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-noreturn"
 void* send_loop(void *id){
-    while(1){
+    while(true){
         send_to_tid(myTid, 1, myTid, 1, clock_d);
 
         pthread_mutex_lock(&mutexClock);
         clock_d++;
         pthread_mutex_unlock(&mutexClock);
 
-        printf("Send: message %d\n",
-               myTid);
+        printf("[%d][%d]\tSend message to [%d]\n",
+               myTid, clock_d, myTid);
         sleep(5);
     }
 }
+#pragma clang diagnostic pop
 
 int main(int argc, char** argv) {
     // Initialize the MPI environment
@@ -84,11 +127,12 @@ int main(int argc, char** argv) {
 
     Packet* packet = new Packet();
 
-    recive(packet);
-
-    // Print off a hello world message
-    printf("Hello from main:  processor %d, out of %d processors, recived: %d\n",
-           myTid, world_size, packet->message);
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-noreturn"
+    while(true) {
+        recive(packet);
+    }
+#pragma clang diagnostic pop
 
     // Finalize the MPI environment.
     delete packet;
