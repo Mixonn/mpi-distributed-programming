@@ -13,7 +13,9 @@
 #define WORKSHOPS_CAPABILITY 2
 #define PYRKON_CAPABILITY 2
 
-#define REQUEST_START_NUM 100
+#define REQUEST_GET 100
+#define REQUEST_LOSE 200
+
 
 /**
  * Return random number. The left and right margin inclusive.
@@ -28,16 +30,14 @@ int get_random_number(int min, int max){
     return (int)dist(mt);
 }
 
-pthread_mutex_t pyrkonMutex;
-pthread_mutex_t workshop_mutex[WORKSHOPS_COUNT];
+pthread_mutex_t workshop_mutex[WORKSHOPS_COUNT+1];
 pthread_mutex_t mutexClock;
 sem_t semaphore;
 
 int clock_d = 1;
 int myTid;
 int world_size;
-Event pyrkon;
-Event workshops[WORKSHOPS_COUNT];
+Event workshops[WORKSHOPS_COUNT+1];
 
 void receive(Packet *packet) {
     MPI_Status status;
@@ -54,26 +54,25 @@ void receive(Packet *packet) {
     pthread_mutex_unlock(&mutexClock);
 
     packet->clock_d = vector[0];
-    packet->type = vector[1];
-    packet->message = vector[2];
-    packet->tid = vector[3];
-    packet->requestType = vector[4];
+    packet->queueId = vector[1];
+    packet->tid = vector[2];
+    packet->requestType = vector[3];
 
     printf("[ID:%d][CLK:%d]\tRecived message: %s\n",
            myTid, clock_d - 1, packet->to_string().c_str());
 }
 
-void send_to_tid(int receiver, int type, int message, int requestType, int sent_clk) {
-    int vector[5] = {sent_clk, type, message, myTid, requestType};
+void send_to_tid(int receiver, int queueId, int requestType, int sent_clk) {
+    int vector[5] = {sent_clk, queueId, myTid, requestType};
     printf("[ID:%d][CLK:%d]\tSend message to [%d]\n",
            myTid, sent_clk, receiver);
     MPI_Request req;
     MPI_Isend(vector, 5, MPI_INT, receiver, receiver, MPI_COMM_WORLD, &req);
 }
 
-void send_to_all(int type, int message, int requestType, int sent_clk) {
+void send_to_all(int queueId, int requestType, int sent_clk) {
     for (int i = 0; i < world_size; i++) {
-        send_to_tid(i, type, message, requestType, sent_clk);
+        send_to_tid(i, queueId, requestType, sent_clk);
     }
 }
 
@@ -81,7 +80,7 @@ void send_to_all(int type, int message, int requestType, int sent_clk) {
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
 void *send_loop(void *id) {
     while (true) {
-        send_to_all(1, myTid, 1, clock_d);
+        send_to_all(1, 1, clock_d);
 
         pthread_mutex_lock(&mutexClock);
         clock_d++;
@@ -103,12 +102,11 @@ int main(int argc, char **argv) {
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
     pthread_mutex_init(&mutexClock, nullptr);
 
-    pyrkon.id = 0;
-    pyrkon.queue.setMaxSize(PYRKON_CAPABILITY);
-    pthread_mutex_init(&pyrkonMutex, nullptr);
-
     for(int i = 0; i < WORKSHOPS_COUNT; i++){
-        workshops[i].id = i+1;
+        workshops[i].id = i;
+        if(i == 0) { //pyrkon
+            workshops[i].queue.setMaxSize(PYRKON_CAPABILITY);
+        }
         workshops[i].queue.setMaxSize(WORKSHOPS_CAPABILITY);
         pthread_mutex_init(&workshop_mutex[i], nullptr);
     }
