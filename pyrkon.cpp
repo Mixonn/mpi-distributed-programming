@@ -5,6 +5,9 @@
 #include <string>
 #include <iostream>
 #include <random>
+#include <utility> //for pair
+#include <map>
+
 #include "Queue.cpp"
 #include "Packet.cpp"
 #include "Event.cpp"
@@ -38,6 +41,19 @@ int clock_d = 1;
 int myTid;
 int world_size;
 Event workshops[WORKSHOPS_COUNT+1];
+std::map<int, bool> workshops_to_visit;
+
+void reset_workshops_to_visit(){
+    workshops_to_visit.clear();
+    int toVisit = get_random_number(1, 5);
+    while(toVisit--){
+        int rand = get_random_number(1, WORKSHOPS_COUNT);
+        while(workshops_to_visit.find(rand) != workshops_to_visit.end()){
+            rand = get_random_number(1, WORKSHOPS_COUNT);
+        }
+        workshops_to_visit.insert(std::make_pair(rand, false));
+    }
+}
 
 void receive(Packet *packet) {
     MPI_Status status;
