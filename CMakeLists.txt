@@ -6,4 +6,5 @@ ADD_LIBRARY(LibsModule
         Packet.cpp
         QueueTest.cpp
         Log.cpp
+        Event.cpp
         )

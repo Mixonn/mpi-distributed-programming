@@ -1,9 +1,8 @@
-#include <iostream>
-#include <cstdio>
+#pragma once
 #include <cstring>
-#include <cstdlib>
-#include <stdio.h>
 #include "Log.cpp"
+#include <climits>
+
 
 using namespace std;
 
@@ -42,6 +41,8 @@ class Priority_Queue {
 private:
     Node *front;
     int size = 0;
+    int max_size = INT_MAX;
+
 public:
     Priority_Queue() {
         front = nullptr;
@@ -121,5 +122,9 @@ public:
 
     Node *getFront() const {
         return front;
+    }
+
+    void setMaxSize(int maxSize) {
+        max_size = maxSize;
     }
 };
