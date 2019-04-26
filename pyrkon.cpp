@@ -103,12 +103,12 @@ int main(int argc, char **argv) {
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
     pthread_mutex_init(&mutexClock, nullptr);
 
-    pyrkon.id = 1;
+    pyrkon.id = 0;
     pyrkon.queue.setMaxSize(PYRKON_CAPABILITY);
     pthread_mutex_init(&pyrkonMutex, nullptr);
 
     for(int i = 0; i < WORKSHOPS_COUNT; i++){
-        workshops[i].id = i;
+        workshops[i].id = i+1;
         workshops[i].queue.setMaxSize(WORKSHOPS_CAPABILITY);
         pthread_mutex_init(&workshop_mutex[i], nullptr);
     }

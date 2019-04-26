@@ -107,6 +107,26 @@ public:
         }
     }
 
+    /**
+     * Return position of node with passed tid
+     * @param tid tid to find
+     * @return return position of node in queue (first element position is 1).
+     * Return -1 when node not found.
+     */
+    int get_pos(int tid){
+        int pos = 1;
+        Node* node = front;
+        while(node != nullptr && node->tid != tid){
+            node = node->next_node;
+            pos ++;
+        }
+        if(node == nullptr){
+            return -1;
+        } else {
+            return pos;
+        }
+    }
+
     std::string to_string() {
         std::string result = "Size: " + std::to_string(size) + "\r\n";
         Node *next = front;
@@ -122,6 +142,9 @@ public:
     }
 
     void setFront(Node *new_front) {
+        if(size != 0){
+            Log::warn("Setting queue front element when queue is not empty");
+        }
         Priority_Queue::front = new_front;
     }
 
