@@ -14,10 +14,11 @@
 
 #define WORKSHOPS_COUNT 10
 #define WORKSHOPS_CAPABILITY 2
-#define PYRKON_CAPABILITY 2
+#define PYRKON_CAPABILITY 10
 
-#define REQUEST_GET 100
-#define REQUEST_LOSE 200
+#define REQUEST_GET_WS 133
+#define ACCEPT_GET_WS 134
+#define REQUEST_LOSE_WS 233
 
 
 /**
@@ -45,6 +46,7 @@ std::map<int, bool> workshops_to_visit;
 
 void reset_workshops_to_visit(){
     workshops_to_visit.clear();
+    workshops_to_visit.insert(std::make_pair(0, false));
     int toVisit = get_random_number(1, 5);
     while(toVisit--){
         int rand = get_random_number(1, WORKSHOPS_COUNT);
@@ -53,6 +55,10 @@ void reset_workshops_to_visit(){
         }
         workshops_to_visit.insert(std::make_pair(rand, false));
     }
+}
+
+bool want_to_visit(int workshop_id){
+    return workshops_to_visit.find(workshop_id) != workshops_to_visit.end();
 }
 
 void receive(Packet *packet) {
@@ -80,14 +86,17 @@ void receive(Packet *packet) {
 
 void send_to_tid(int receiver, int queueId, int requestType, int sent_clk) {
     int vector[5] = {sent_clk, queueId, myTid, requestType};
-    printf("[ID:%d][CLK:%d]\tSend message to [%d]\n",
-           myTid, sent_clk, receiver);
+    printf("[ID:%d][CLK:%d]\tSend message to [%d], ID: %d, reqType: %d\n",
+           myTid, sent_clk, receiver, queueId, requestType);
     MPI_Request req;
     MPI_Isend(vector, 5, MPI_INT, receiver, receiver, MPI_COMM_WORLD, &req);
 }
 
 void send_to_all(int queueId, int requestType, int sent_clk) {
     for (int i = 0; i < world_size; i++) {
+        if(i == myTid){
+            continue;
+        }
         send_to_tid(i, queueId, requestType, sent_clk);
     }
 }
@@ -96,12 +105,23 @@ void send_to_all(int queueId, int requestType, int sent_clk) {
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
 void *send_loop(void *id) {
     while (true) {
-        send_to_all(1, 1, clock_d);
+
+        pthread_mutex_lock(&workshop_mutex[0]); //add me to queue
+        Node node;
+        node.tid = myTid;
+        node.clk = clock_d;
+        workshops[0].queue.put(&node);
+        pthread_mutex_unlock(&workshop_mutex[0]);
+
+        send_to_all(0, REQUEST_GET_WS, clock_d);
 
         pthread_mutex_lock(&mutexClock);
         clock_d++;
-
         pthread_mutex_unlock(&mutexClock);
+
+        sem_wait(&semaphore); //waiting for all responses
+
+        cout << myTid << "RECEIVED ALL RESPONSES" << endl;
         sleep(5);
     }
 }
@@ -120,10 +140,6 @@ int main(int argc, char **argv) {
 
     for(int i = 0; i < WORKSHOPS_COUNT; i++){
         workshops[i].id = i;
-        if(i == 0) { //pyrkon
-            workshops[i].queue.setMaxSize(PYRKON_CAPABILITY);
-        }
-        workshops[i].queue.setMaxSize(WORKSHOPS_CAPABILITY);
         pthread_mutex_init(&workshop_mutex[i], nullptr);
     }
 
@@ -139,6 +155,32 @@ int main(int argc, char **argv) {
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
     while (true) {
         receive(packet);
+        int const queueId = packet->queueId;
+        if(packet->requestType == REQUEST_GET_WS){
+            pthread_mutex_lock(&workshop_mutex[queueId]);
+            Node *node = new Node;
+            node->tid = packet->tid;
+            node->clk = packet->clock_d;
+            workshops[queueId].queue.put(node);
+            pthread_mutex_unlock(&workshop_mutex[queueId]);
+
+            pthread_mutex_lock(&mutexClock);
+            send_to_tid(packet->tid, queueId, ACCEPT_GET_WS, clock_d);
+            clock_d++;
+            pthread_mutex_unlock(&mutexClock);
+        }
+        continue;
+        if(packet->requestType == ACCEPT_GET_WS){
+            pthread_mutex_lock(&workshop_mutex[queueId]);
+            workshops[queueId].accepted_counter++;
+            pthread_mutex_unlock(&workshop_mutex[queueId]);
+        }
+        int queueSize = workshops[queueId].queue.get_size();
+        int queuePos = workshops[queueId].queue.get_pos(myTid);
+        int ahead_of = queueSize - queuePos - 1;
+        if(ahead_of >= world_size - PYRKON_CAPABILITY && workshops[queueId].accepted_counter == world_size - 1){
+            sem_post(&semaphore);
+        }
     }
 #pragma clang diagnostic pop
 

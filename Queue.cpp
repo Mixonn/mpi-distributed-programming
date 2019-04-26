@@ -41,7 +41,6 @@ class Priority_Queue {
 private:
     Node *front;
     int size = 0;
-    int max_size = INT_MAX;
 
 public:
     Priority_Queue() {
@@ -58,11 +57,6 @@ public:
     }
 
     void put(Node *node_to_add) {
-        if(size == max_size){
-            Log::warn("Cannot put new item into queue because it is full!");
-            Log::debug("Tried put: " + node_to_add->to_string());
-            return;
-        }
         size++;
         if (front == nullptr) {
             front = node_to_add;
@@ -87,7 +81,7 @@ public:
         }
     }
 
-    void pop(int tid) {
+    void pop(int tid) { //todo clear nodes from memory
         Node *next = front;
         Node *previous = nullptr;
 
@@ -110,11 +104,11 @@ public:
     /**
      * Return position of node with passed tid
      * @param tid tid to find
-     * @return return position of node in queue (first element position is 1).
+     * @return return position of node in queue (first element position is 0).
      * Return -1 when node not found.
      */
     int get_pos(int tid){
-        int pos = 1;
+        int pos = 0;
         Node* node = front;
         while(node != nullptr && node->tid != tid){
             node = node->next_node;
@@ -150,9 +144,5 @@ public:
 
     Node *getFront() const {
         return front;
-    }
-
-    void setMaxSize(int maxSize) {
-        max_size = maxSize;
     }
 };
