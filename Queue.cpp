@@ -52,12 +52,17 @@ public:
         Node *curr = front;
         while (curr != nullptr) {
             Node *next = curr->next_node;
-            free(curr); //is this correct?
+            free(curr); //todo: is this correct?
             curr = next;
         }
     }
 
     void put(Node *node_to_add) {
+        if(size == max_size){
+            Log::warn("Cannot put new item into queue because it is full!");
+            Log::debug("Tried put: " + node_to_add->to_string());
+            return;
+        }
         size++;
         if (front == nullptr) {
             front = node_to_add;
