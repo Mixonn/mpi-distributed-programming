@@ -1,0 +1,3 @@
+# Allow adding empty directory to git
+*
+!.gitignore
