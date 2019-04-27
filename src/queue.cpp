@@ -1,16 +1,15 @@
 #pragma once
-#include <cstring>
-#include "Log.cpp"
+#include <string>
 #include <climits>
 
+#include "log.cpp"
 
-using namespace std;
 
 class Node {
 public:
     int clk;
     int tid;
-    Node *next_node;
+    Node *next_node = nullptr;
 
     std::string to_string() {
         return "clk: " + std::to_string(clk) + " tid: " + std::to_string(tid);
@@ -37,21 +36,21 @@ public:
     }
 };
 
-class Priority_Queue {
+class PriorityQueue {
 private:
     Node *front;
     int size = 0;
 
 public:
-    Priority_Queue() {
+    PriorityQueue() {
         front = nullptr;
     }
 
-    ~Priority_Queue() {
+    ~PriorityQueue() {
         Node *curr = front;
         while (curr != nullptr) {
             Node *next = curr->next_node;
-            free(curr); //todo: is this correct?
+            delete curr; //todo: is this correct?
             curr = next;
         }
     }
@@ -107,7 +106,7 @@ public:
      * @return return position of node in queue (first element position is 0).
      * Return -1 when node not found.
      */
-    int get_pos(int tid){
+    int get_pos(int tid) {
         int pos = 0;
         Node* node = front;
         while(node != nullptr && node->tid != tid){
@@ -139,7 +138,7 @@ public:
         if(size != 0){
             Log::warn("Setting queue front element when queue is not empty");
         }
-        Priority_Queue::front = new_front;
+        PriorityQueue::front = new_front;
     }
 
     Node *getFront() const {

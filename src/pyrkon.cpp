@@ -1,24 +1,24 @@
-#include <mpi.h> //with openmpi use #include "mpi.h"
-#include <unistd.h> //for sleep
+#include <mpi.h>
+#include <unistd.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <string>
 #include <iostream>
 #include <random>
-#include <utility> //for pair
+#include <utility>
 #include <map>
 
-#include "Queue.cpp"
-#include "Packet.cpp"
-#include "Event.cpp"
+#include "queue.cpp"
+#include "packet.cpp"
+#include "event.cpp"
 
-#define WORKSHOPS_COUNT 10
-#define WORKSHOPS_CAPABILITY 2
-#define PYRKON_CAPABILITY 10
+const int WORKSHOPS_COUNT = 10;
+const int WORKSHOPS_CAPABILITY = 2;
+const int PYRKON_CAPABILITY = 10;
 
-#define REQUEST_GET_WS 133
-#define ACCEPT_GET_WS 134
-#define REQUEST_LOSE_WS 233
+const int REQUEST_GET_WS = 133;
+const int ACCEPT_GET_WS = 134;
+const int REQUEST_LOSE_WS = 233;
 
 
 /**
@@ -27,7 +27,7 @@
  * @param max maximum value (inclusive)
  * @return return random value between min and max inclusive
  */
-int get_random_number(int min, int max){
+int get_random_number(int min, int max) {
     std::random_device rd;
     std::mt19937 mt(rd());
     std::uniform_real_distribution<double> dist(min, max+1);
@@ -44,7 +44,7 @@ int world_size;
 Event workshops[WORKSHOPS_COUNT+1];
 std::map<int, bool> workshops_to_visit;
 
-void reset_workshops_to_visit(){
+void reset_workshops_to_visit() {
     workshops_to_visit.clear();
     workshops_to_visit.insert(std::make_pair(0, false));
     int toVisit = get_random_number(1, 5);
@@ -101,11 +101,8 @@ void send_to_all(int queueId, int requestType, int sent_clk) {
     }
 }
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wmissing-noreturn"
 void *send_loop(void *id) {
     while (true) {
-
         pthread_mutex_lock(&workshop_mutex[0]); //add me to queue
         Node node;
         node.tid = myTid;
@@ -121,11 +118,11 @@ void *send_loop(void *id) {
 
         sem_wait(&semaphore); //waiting for all responses
 
-        cout << myTid << "RECEIVED ALL RESPONSES" << endl;
+	std::cout << myTid << "RECEIVED ALL RESPONSES" << std::endl;
         sleep(5);
     }
 }
-#pragma clang diagnostic pop
+
 
 int main(int argc, char **argv) {
     MPI_Init(&argc, &argv);
@@ -151,8 +148,6 @@ int main(int argc, char **argv) {
 
     auto *packet = new Packet();
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wmissing-noreturn"
     while (true) {
         receive(packet);
         int const queueId = packet->queueId;
@@ -169,7 +164,6 @@ int main(int argc, char **argv) {
             clock_d++;
             pthread_mutex_unlock(&mutexClock);
         }
-        continue;
         if(packet->requestType == ACCEPT_GET_WS){
             pthread_mutex_lock(&workshop_mutex[queueId]);
             workshops[queueId].accepted_counter++;
@@ -182,7 +176,6 @@ int main(int argc, char **argv) {
             sem_post(&semaphore);
         }
     }
-#pragma clang diagnostic pop
 
     // Finalize the MPI environment.
     delete packet;
