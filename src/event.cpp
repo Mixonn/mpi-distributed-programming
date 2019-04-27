@@ -1,9 +1,3 @@
-#pragma once
-#include "queue.cpp"
+#include "event.hpp"
 
-class Event {
-public:
-    int id;
-    PriorityQueue queue;
-    int accepted_counter = 0;
-};
+Event::Event() : id(0), accepted_counter(0) { }

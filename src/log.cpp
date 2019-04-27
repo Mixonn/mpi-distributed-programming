@@ -1,35 +1,22 @@
-#pragma once
-#include <iostream>
-#include <string>
+#include "log.hpp"
 
-const std::string ANSI_COLOR_RED = "\x1b[31m";
-const std::string ANSI_COLOR_GREEN = "\x1b[32m";
-const std::string ANSI_COLOR_YELLOW = "\x1b[33m";
-const std::string ANSI_COLOR_BLUE = "\x1b[34m";
-const std::string ANSI_COLOR_MAGENTA = "\x1b[35m";
-const std::string ANSI_COLOR_CYAN = "\x1b[36m";
-const std::string ANSI_COLOR_RESET = "\x1b[0m";
+void Log::error(const std::string& message) {
+    log_color("[ERROR]" + message, ANSI_COLOR_RED);
+}
 
-class Log {
-public:
-    static void error(const std::string& message){
-        log_color("[ERROR]" + message, ANSI_COLOR_RED);
-    }
+void Log::warn(const std::string& message) {
+    log_color("[WARN]" + message, ANSI_COLOR_YELLOW);
+}
 
-    static void warn(const std::string& message){
-        log_color("[WARN]" + message, ANSI_COLOR_YELLOW);
-    }
+void Log::debug(const std::string& message) {
+    log_color("[DEBUG]" + message, ANSI_COLOR_GREEN);
+}
 
-    static void debug(const std::string& message){
-        log_color("[DEBUG]" + message, ANSI_COLOR_GREEN);
-    }
+void Log::info(const std::string& message) {
+    log_color(message, ANSI_COLOR_RESET);
+}
 
-    static void info(const std::string& message){
-        log_color(message, ANSI_COLOR_RESET);
-    }
+void Log::log_color(const std::string& message, const std::string& color) {
+    std::cout << color << message << ANSI_COLOR_RESET << std::endl;
+}
 
-private:
-    static void log_color(const std::string& message, const std::string& color){
-        std::cout << color << message << ANSI_COLOR_RESET << std::endl;
-    }
-};

@@ -8,9 +8,9 @@
 #include <utility>
 #include <map>
 
-#include "queue.cpp"
-#include "packet.cpp"
-#include "event.cpp"
+#include "queue.hpp"
+#include "packet.hpp"
+#include "event.hpp"
 
 const int WORKSHOPS_COUNT = 10;
 const int WORKSHOPS_CAPABILITY = 2;
