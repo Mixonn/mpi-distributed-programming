@@ -3,13 +3,12 @@
 
 class Packet {
 public:
-    Packet() = default;
-    Packet(int clockD, int queueId, int tid, int requestType);
+    Packet(int clock_d, int queue_id, int tid, int request_type);
     std::string to_string();
 
     int clock_d;
-    int queueId;
+    int queue_id;
     int tid;
-    int requestType;
+    int request_type;
 
 };

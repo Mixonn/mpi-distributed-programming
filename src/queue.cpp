@@ -34,7 +34,7 @@ PriorityQueue::~PriorityQueue() {
     Node *curr = front;
     while (curr != nullptr) {
         Node *next = curr->next_node;
-        delete curr; //todo: is this correct?
+        delete curr;
         curr = next;
     }
 }
