@@ -114,9 +114,19 @@ void *send_loop(void *id) {
         pthread_mutex_unlock(&mutexClock);
 
         sem_wait(&semaphore); //waiting for all responses
+        Log::color_info(my_tid, clock_d, "Received all responses", ANSI_COLOR_MAGENTA);
 
-        Log::info(my_tid, clock_d, "Received all responses");
-        sleep(5);
+//        reset_workshops_to_visit();
+//        pthread_mutex_lock(&mutexClock);
+//        for (auto & it : workshops_to_visit)
+//        {
+//            send_to_all(it.first,REQUEST_GET_WS, clock_d);
+//            clock_d++;
+//
+//        }
+//        pthread_mutex_unlock(&mutexClock);
+
+        sleep(30);
     }
 }
 

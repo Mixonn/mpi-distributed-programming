@@ -17,6 +17,9 @@ public:
     static void debug(const std::string& message);
     static void info(const std::string& message);
     static void info(int id, int clk, const std::string& message);
+    static void color_info(const std::string& message, const std::string& color);
+    static void color_info(int id, int clk, const std::string& message, const std::string& color);
+
 
 private:
     static void log_color(const std::string& message, const std::string& color);
