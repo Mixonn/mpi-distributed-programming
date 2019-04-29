@@ -195,6 +195,12 @@ int main(int argc, char **argv) {
                     workshops[queue_id].accepted_counter++;
                 } pthread_mutex_unlock(&workshop_mutex[queue_id]);
             }
+            if (packet.request_type == REQUEST_LOSE_WS){
+                pthread_mutex_lock(&workshop_mutex[queue_id]);
+                {
+                    workshops[queue_id].queue.pop(packet.tid);
+                } pthread_mutex_unlock(&workshop_mutex[queue_id]);
+            }
         }
 
         int ahead_of;
@@ -207,8 +213,9 @@ int main(int argc, char **argv) {
             accepted_counter = workshops[queue_id].accepted_counter;
         } pthread_mutex_unlock(&workshop_mutex[queue_id]);
 
-        if(ahead_of >= world_size - PYRKON_CAPABILITY && accepted_counter == world_size - 1){
-            sem_post(&workshop_semaphore[queue_id]);
+        int capability = (packet.queue_id == 0) ? PYRKON_CAPABILITY : WORKSHOPS_CAPABILITY;
+        if(ahead_of >= world_size - capability){
+            sem_post(&workshop_semaphore[queue_id]); //todo it unlocking many times
         }
     }
 
