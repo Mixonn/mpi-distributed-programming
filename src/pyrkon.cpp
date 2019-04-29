@@ -44,7 +44,7 @@ int clock_d = 1;
 int my_tid;
 int world_size;
 Event workshops[WORKSHOPS_COUNT+1];
-std::map<int, bool> workshops_to_visit;
+std::map<int, bool> workshops_to_visit; //todo: in the future we can mark it as <Event, bool>
 
 void reset_workshops_to_visit() {
     workshops_to_visit.clear();
@@ -61,6 +61,18 @@ void reset_workshops_to_visit() {
 
 bool want_to_visit(int workshop_id){
     return workshops_to_visit.find(workshop_id) != workshops_to_visit.end();
+}
+
+void mark_workshop_visited(int workshop_id){
+    for(auto & it : workshops_to_visit){
+        if(it.first != workshop_id){
+            continue;
+        }
+        it.second = true;
+        return;
+    }
+    Log::warn(my_tid, clock_d, "Cannot mark workshop as visited because it should not be visited");
+
 }
 
 Packet receive() {
@@ -116,15 +128,20 @@ void *send_loop(void *id) {
         sem_wait(&semaphore); //waiting for all responses
         Log::color_info(my_tid, clock_d, "Received all responses", ANSI_COLOR_MAGENTA);
 
-//        reset_workshops_to_visit();
-//        pthread_mutex_lock(&mutexClock);
-//        for (auto & it : workshops_to_visit)
-//        {
-//            send_to_all(it.first,REQUEST_GET_WS, clock_d);
-//            clock_d++;
-//
-//        }
-//        pthread_mutex_unlock(&mutexClock);
+        reset_workshops_to_visit();
+        std::string drawn_workshops;
+        for (auto & it : workshops_to_visit)
+        {
+            drawn_workshops += std::to_string(it.first) + ", ";
+        }
+        Log::debug(my_tid, clock_d, "Drawn workshops: " + drawn_workshops);
+        pthread_mutex_lock(&mutexClock);
+        for (auto & it : workshops_to_visit)
+        {
+            send_to_all(it.first,REQUEST_GET_WS, clock_d);
+            clock_d++;
+        }
+        pthread_mutex_unlock(&mutexClock);
 
         sleep(30);
     }
