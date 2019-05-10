@@ -1,8 +1,8 @@
 # mpi-distributed-programming
 University project, mpi library demo
 
-Compile
-`mpic++ -o pyrkon pyrkon.cpp -lpthread`
+### Build
+`make`
 
-Run
-`mpirun -np 4 ./pyrkon`
+### Run
+`mpirun -np 4 ./bin/pyrkon`
