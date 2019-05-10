@@ -17,6 +17,7 @@ public:
 
     int clk;
     int tid;
+    bool want_go = true;
     Node *next_node;
 };
 

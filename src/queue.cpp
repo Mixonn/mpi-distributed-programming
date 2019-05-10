@@ -8,6 +8,8 @@ std::string Node::to_string() {
 }
 
 bool Node::operator<(const Node &to_compare) const {
+    if (!want_go)
+        return false;
     if (clk < to_compare.clk)
         return true;
     if (to_compare.clk < clk)

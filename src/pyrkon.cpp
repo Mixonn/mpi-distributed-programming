@@ -119,25 +119,28 @@ void *send_loop(void *id) {
         {
             send_to_all(0, REQUEST_GET_WS, clock_d);
             clock_d++;
+            Log::color_info(my_tid, clock_d, "Received all responses", ANSI_COLOR_MAGENTA);
         } pthread_mutex_unlock(&mutexClock);
 
         sem_wait(&workshop_semaphore[0]); //waiting for all responses
-        Log::color_info(my_tid, clock_d, "Received all responses", ANSI_COLOR_MAGENTA);
 
-//        reset_workshops_to_visit();
-//        std::string drawn_workshops;
-//        for (auto & it : workshops_to_visit)
-//        {
-//            drawn_workshops += std::to_string(it.first) + ", ";
-//        }
-//        Log::debug(my_tid, clock_d, "Drawn workshops: " + drawn_workshops);
-//        pthread_mutex_lock(&mutexClock);
-//        for (auto & it : workshops_to_visit)
-//        {
-//            send_to_all(it.first,REQUEST_GET_WS, clock_d);
-//            clock_d++;
-//        }
-//        pthread_mutex_unlock(&mutexClock);
+        reset_workshops_to_visit();
+        std::string drawn_workshops;
+        for (auto & it : workshops_to_visit)
+        {
+            drawn_workshops += std::to_string(it.first) + ", ";
+        }
+        pthread_mutex_lock(&mutexClock);
+        Log::debug(my_tid, clock_d, "Drawn workshops: " + drawn_workshops);
+        for (auto & it : workshops_to_visit)
+        {
+            send_to_all(it.first,REQUEST_GET_WS, clock_d);
+            clock_d++;
+        }
+        pthread_mutex_unlock(&mutexClock);
+        for (int i=1; i<=WORKSHOPS_COUNT; i++){
+            sem_wait(&workshop_semaphore[i]);
+        }
         sleep(30);
 
     }
