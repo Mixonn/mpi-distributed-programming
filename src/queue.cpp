@@ -1,15 +1,15 @@
 #include "queue.hpp"
 
 
-Node::Node() : next_node(nullptr) { }
+Node::Node(int primary, int clk, int tid) : primary(primary), clk(clk), tid(tid), next_node(nullptr) { }
 
 std::string Node::to_string() {
     return "clk: " + std::to_string(clk) + " tid: " + std::to_string(tid);
 }
 
 bool Node::operator<(const Node &to_compare) const {
-    if (!want_go)
-        return false;
+    if(primary > to_compare.primary)
+        return true;
     if (clk < to_compare.clk)
         return true;
     if (to_compare.clk < clk)
@@ -18,15 +18,19 @@ bool Node::operator<(const Node &to_compare) const {
 }
 
 bool Node::operator>(const Node &to_compare) const {
-    return to_compare < *this;
+    return !(*this < to_compare);
+}
+
+bool Node::operator==(const Node &to_compare) const {
+    return (primary == to_compare.primary && clk == to_compare.clk && tid == to_compare.tid);
 }
 
 bool Node::operator<=(const Node &to_compare) const {
-    return !(to_compare < *this);
+    return *this < to_compare || *this == to_compare;
 }
 
 bool Node::operator>=(const Node &to_compare) const {
-    return !(*this < to_compare);
+    return *this > to_compare || *this == to_compare;
 }
 
 
@@ -130,4 +134,3 @@ void PriorityQueue::set_front(Node *new_front) {
 Node *PriorityQueue::getFront() const {
     return front;
 }
-

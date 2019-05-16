@@ -79,7 +79,8 @@ void mark_workshop_visited(int workshop_id){
 Packet receive() {
     MPI_Status req;
     int arr[5];
-    MPI_Recv(&arr, 5, MPI_INT, MPI_ANY_SOURCE, my_tid, MPI_COMM_WORLD, &req);
+    memset(arr, -1, sizeof(arr));
+    MPI_Recv(arr, 5, MPI_INT, MPI_ANY_SOURCE, my_tid, MPI_COMM_WORLD, &req);
 
     Packet packet(arr[0], arr[1], arr[2], arr[3]);
     Log::info(my_tid, clock_d, "Received " + packet.to_string());
@@ -109,9 +110,7 @@ void *send_loop(void *id) {
 
         pthread_mutex_lock(&workshop_mutex[0]); //add me to queue
         {
-            Node node;
-            node.tid = my_tid;
-            node.clk = clock_d;
+            Node node(1, my_tid, clock_d);
             workshops[0].queue.put(&node);
         } pthread_mutex_unlock(&workshop_mutex[0]);
 
@@ -149,6 +148,7 @@ void *send_loop(void *id) {
 
 int main(int argc, char **argv) {
     MPI_Init(&argc, &argv);
+
     // Get the number of processes
     MPI_Comm_rank(MPI_COMM_WORLD, &my_tid);        /* get current process id */
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
@@ -180,9 +180,7 @@ int main(int argc, char **argv) {
             if (packet.request_type == REQUEST_GET_WS) {
                 pthread_mutex_lock(&workshop_mutex[queue_id]);
                 {
-                    Node *node = new Node;
-                    node->tid = packet.tid;
-                    node->clk = packet.clock_d;
+                    Node *node = new Node(1, packet.tid, packet.clock_d);
                     workshops[queue_id].queue.put(node);
                 } pthread_mutex_unlock(&workshop_mutex[queue_id]);
 

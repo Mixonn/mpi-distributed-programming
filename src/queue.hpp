@@ -7,17 +7,18 @@
 
 class Node {
 public:
-    Node();
+    Node(int primary, int clk, int tid);
     std::string to_string();
 
     bool operator<(const Node &to_compare) const;
     bool operator>(const Node &to_compare) const;
+    bool operator==(const Node &to_compare) const;
     bool operator<=(const Node &to_compare) const;
     bool operator>=(const Node &to_compare) const;
 
+    int primary;
     int clk;
     int tid;
-    bool want_go = true;
     Node *next_node;
 };
 
