@@ -79,9 +79,9 @@ void mark_workshop_visited(int workshop_id){
 
 Packet receive() {
     MPI_Status req;
-    int arr[5];
-    memset(arr, -2, sizeof(arr));
-    MPI_Recv(arr, 5, MPI_INT, MPI_ANY_SOURCE, my_tid, MPI_COMM_WORLD, &req);
+    int arr[5] = { -2, -2, -2, -2, -2};
+    int status = MPI_Recv(arr, 5, MPI_INT, MPI_ANY_SOURCE, my_tid, MPI_COMM_WORLD, &req);
+    printf("Received %d %d %d %d\n", arr[0], arr[1], arr[2], arr[3]);
 
     Packet packet(arr[0], arr[1], arr[2], arr[3]);
     Log::info(my_tid, clock_d, "Received " + packet.to_string());
