@@ -200,6 +200,9 @@ int main(int argc, char **argv) {
                 pthread_mutex_lock(&workshop_mutex[queue_id]);
                 {
                     workshops[queue_id].queue.pop(packet.tid);
+
+                    Node *node = new Node(0, packet.tid, packet.clock_d);
+                    workshops[queue_id].queue.put(node);
                 } pthread_mutex_unlock(&workshop_mutex[queue_id]);
             }
         }
