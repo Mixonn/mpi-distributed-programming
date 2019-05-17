@@ -9,6 +9,7 @@
 #include <cmath>
 #include <vector>
 #include <map>
+#include <thread>
 
 #include "queue.hpp"
 #include "packet.hpp"
@@ -79,7 +80,7 @@ void mark_workshop_visited(int workshop_id){
 Packet receive() {
     MPI_Status req;
     int arr[5];
-    memset(arr, -1, sizeof(arr));
+    memset(arr, -2, sizeof(arr));
     MPI_Recv(arr, 5, MPI_INT, MPI_ANY_SOURCE, my_tid, MPI_COMM_WORLD, &req);
 
     Packet packet(arr[0], arr[1], arr[2], arr[3]);
@@ -107,7 +108,6 @@ void send_to_all(int queue_id, int request_type, int sent_clk) {
 
 void *send_loop(void *id) {
     while (true) {
-
         pthread_mutex_lock(&workshop_mutex[0]); //add me to queue
         {
             Node node(1, my_tid, clock_d);
@@ -118,10 +118,14 @@ void *send_loop(void *id) {
         {
             send_to_all(0, REQUEST_GET_WS, clock_d);
             clock_d++;
-            Log::color_info(my_tid, clock_d, "Received all responses", ANSI_COLOR_MAGENTA);
         } pthread_mutex_unlock(&mutexClock);
 
         sem_wait(&workshop_semaphore[0]); //waiting for all responses
+
+        pthread_mutex_lock(&mutexClock);
+        {
+            Log::color_info(my_tid, clock_d, "Received all responses", ANSI_COLOR_MAGENTA);
+        } pthread_mutex_unlock(&mutexClock);
 
         reset_workshops_to_visit();
         std::string drawn_workshops;
@@ -140,9 +144,25 @@ void *send_loop(void *id) {
         for (int i=1; i<=WORKSHOPS_COUNT; i++){
             sem_wait(&workshop_semaphore[i]);
         }
-        sleep(30);
-
+        sleep(300);
     }
+}
+
+void inside_workshop(int workshop_id) {
+    pthread_mutex_lock(&mutexClock);
+    {
+        Log::info(my_tid, clock_d, "Inside workshop " + std::to_string(workshop_id));
+    } pthread_mutex_unlock(&mutexClock);
+
+    sleep(5);
+
+    pthread_mutex_lock(&mutexClock);
+    {
+        Log::info(my_tid, clock_d, "Quitting workshop " + std::to_string(workshop_id));
+        send_to_all(workshop_id, REQUEST_LOSE_WS, clock_d);
+    } pthread_mutex_unlock(&mutexClock);
+
+
 }
 
 
@@ -220,6 +240,12 @@ int main(int argc, char **argv) {
         int capability = (packet.queue_id == 0) ? PYRKON_CAPABILITY : WORKSHOPS_CAPABILITY;
         if(ahead_of >= world_size - capability){
             sem_post(&workshop_semaphore[queue_id]); //todo it unlocking many times
+
+            std::thread t1(inside_workshop, queue_id);
+            t1.join();
+
+
+
         }
     }
 
