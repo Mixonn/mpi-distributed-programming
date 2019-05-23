@@ -50,14 +50,13 @@ std::map<int, bool> workshops_to_visit; //todo: in the future we can mark it as 
 void reset_workshops_to_visit() {
     workshops_to_visit.clear();
     workshops_to_visit.insert(std::make_pair(0, false));
-    int toVisit = 1;
-//    int toVisit = get_random_number(1, 5);
-    while(toVisit--){
-        int rand = get_random_number(1, WORKSHOPS_COUNT);
-        while(workshops_to_visit.find(rand) != workshops_to_visit.end()){
-            rand = get_random_number(1, WORKSHOPS_COUNT);
-        }
-        workshops_to_visit.insert(std::make_pair(rand, false));
+    int to_visit = 1; // TODO: change to get_random_number(1, 5);
+    while(to_visit--) {
+        int random_number;
+        do {
+            random_number = get_random_number(1, WORKSHOPS_COUNT);
+        } while(workshops_to_visit.find(random_number) != workshops_to_visit.end());
+        workshops_to_visit.insert(std::make_pair(random_number, false));
     }
 }
 
@@ -73,6 +72,8 @@ void mark_workshop_visited(int workshop_id){
         it.second = true;
         return;
     }
+
+    // This should not be reached
     Log::warn(my_tid, clock_d, "Cannot mark workshop as visited because it should not be visited");
 
 }
@@ -80,7 +81,7 @@ void mark_workshop_visited(int workshop_id){
 Packet receive() {
     MPI_Status req;
     int arr[5] = { -2, -2, -2, -2, -2};
-    int status = MPI_Recv(arr, 5, MPI_INT, MPI_ANY_SOURCE, my_tid, MPI_COMM_WORLD, &req);
+    MPI_Recv(arr, 5, MPI_INT, MPI_ANY_SOURCE, my_tid, MPI_COMM_WORLD, &req);
     printf("Received %d %d %d %d\n", arr[0], arr[1], arr[2], arr[3]);
 
     Packet packet(arr[0], arr[1], arr[2], arr[3]);
@@ -106,6 +107,21 @@ void send_to_all(int queue_id, int request_type, int sent_clk) {
     }
 }
 
+void inside_workshop(int workshop_id) {
+    pthread_mutex_lock(&mutexClock);
+    {
+        Log::info(my_tid, clock_d, "Inside workshop " + std::to_string(workshop_id));
+    } pthread_mutex_unlock(&mutexClock);
+
+    sleep(5);
+
+    pthread_mutex_lock(&mutexClock);
+    {
+        Log::info(my_tid, clock_d, "Quitting workshop " + std::to_string(workshop_id));
+        send_to_all(workshop_id, REQUEST_LOSE_WS, clock_d);
+    } pthread_mutex_unlock(&mutexClock);
+}
+
 void *send_loop(void *id) {
     while (true) {
         pthread_mutex_lock(&workshop_mutex[0]); //add me to queue
@@ -120,7 +136,8 @@ void *send_loop(void *id) {
             clock_d++;
         } pthread_mutex_unlock(&mutexClock);
 
-        sem_wait(&workshop_semaphore[0]); //waiting for all responses
+        // Wait for all responses regarding Pyrkon event
+        sem_wait(&workshop_semaphore[0]);
 
         pthread_mutex_lock(&mutexClock);
         {
@@ -129,40 +146,30 @@ void *send_loop(void *id) {
 
         reset_workshops_to_visit();
         std::string drawn_workshops;
-        for (auto & it : workshops_to_visit)
-        {
+        for (auto & it : workshops_to_visit) {
             drawn_workshops += std::to_string(it.first) + ", ";
         }
         pthread_mutex_lock(&mutexClock);
-        Log::debug(my_tid, clock_d, "Drawn workshops: " + drawn_workshops);
-        for (auto & it : workshops_to_visit)
         {
-            send_to_all(it.first,REQUEST_GET_WS, clock_d);
-            clock_d++;
-        }
-        pthread_mutex_unlock(&mutexClock);
+            Log::debug(my_tid, clock_d, "Drawn workshops: " + drawn_workshops);
+            for (auto &it : workshops_to_visit) {
+                send_to_all(it.first, REQUEST_GET_WS, clock_d);
+                clock_d++;
+            }
+        } pthread_mutex_unlock(&mutexClock);
+
         for (int i=1; i<=WORKSHOPS_COUNT; i++){
+            // Wait for the acceptance
             sem_wait(&workshop_semaphore[i]);
         }
+
+        for(auto &it: workshops_to_visit) {
+            // inside_workshop() deals with mutexes, no need for handling them here
+            inside_workshop(it.first);
+        }
+
         sleep(300);
     }
-}
-
-void inside_workshop(int workshop_id) {
-    pthread_mutex_lock(&mutexClock);
-    {
-        Log::info(my_tid, clock_d, "Inside workshop " + std::to_string(workshop_id));
-    } pthread_mutex_unlock(&mutexClock);
-
-    sleep(5);
-
-    pthread_mutex_lock(&mutexClock);
-    {
-        Log::info(my_tid, clock_d, "Quitting workshop " + std::to_string(workshop_id));
-        send_to_all(workshop_id, REQUEST_LOSE_WS, clock_d);
-    } pthread_mutex_unlock(&mutexClock);
-
-
 }
 
 
@@ -185,6 +192,7 @@ int main(int argc, char **argv) {
         sem_wait(&workshop_semaphore[i]);
     }
 
+    // Handle send_loop inside seperate thread
     pthread_t threadId;
     pthread_create(&threadId, &attr, send_loop, nullptr);
 
@@ -240,12 +248,6 @@ int main(int argc, char **argv) {
         int capability = (packet.queue_id == 0) ? PYRKON_CAPABILITY : WORKSHOPS_CAPABILITY;
         if(ahead_of >= world_size - capability){
             sem_post(&workshop_semaphore[queue_id]); //todo it unlocking many times
-
-            std::thread t1(inside_workshop, queue_id);
-            t1.join();
-
-
-
         }
     }
 

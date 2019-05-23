@@ -99,7 +99,7 @@ void PriorityQueue::pop(int tid) { //todo clear nodes from memory
 int PriorityQueue::get_pos(int tid) {
     int pos = 0;
     Node* node = front;
-    while(node != nullptr && node->tid != tid){
+    while(node != nullptr && node->tid != tid) {
         node = node->next_node;
         pos ++;
     }
