@@ -15,13 +15,24 @@
 #include "packet.hpp"
 #include "event.hpp"
 
-const int WORKSHOPS_COUNT = 10;
-const int WORKSHOPS_CAPABILITY = 1;
-const int PYRKON_CAPABILITY = 2;
+// Default values, may be provided as command-line args
+int workshops_count;
+int workshops_capability;
+int pyrkon_capability;
 
 const int REQUEST_GET_WS = 133;
 const int ACCEPT_GET_WS = 134;
 const int REQUEST_LOSE_WS = 233;
+
+std::vector<pthread_mutex_t> workshop_mutex;
+std::vector<sem_t> workshop_semaphore;
+pthread_mutex_t mutexClock;
+
+std::vector<Event> workshops;
+std::map<int, bool> workshops_to_visit; //todo: in the future we can mark it as <Event, bool>
+int clock_d = 1;
+int my_tid;
+int world_size;
 
 
 /**
@@ -37,15 +48,7 @@ int get_random_number(int min, int max) {
     return (int)dist(mt);
 }
 
-pthread_mutex_t workshop_mutex[WORKSHOPS_COUNT+1];
-pthread_mutex_t mutexClock;
-sem_t workshop_semaphore[WORKSHOPS_COUNT+1];
 
-int clock_d = 1;
-int my_tid;
-int world_size;
-Event workshops[WORKSHOPS_COUNT+1];
-std::map<int, bool> workshops_to_visit; //todo: in the future we can mark it as <Event, bool>
 
 void reset_workshops_to_visit() {
     workshops_to_visit.clear();
@@ -54,7 +57,7 @@ void reset_workshops_to_visit() {
     while(to_visit--) {
         int random_number;
         do {
-            random_number = get_random_number(1, WORKSHOPS_COUNT);
+            random_number = get_random_number(1, workshops_count);
         } while(workshops_to_visit.find(random_number) != workshops_to_visit.end());
         workshops_to_visit.insert(std::make_pair(random_number, false));
     }
@@ -158,7 +161,7 @@ void *send_loop(void *id) {
             }
         } pthread_mutex_unlock(&mutexClock);
 
-        for (int i=1; i<=WORKSHOPS_COUNT; i++){
+        for (int i=1; i<=workshops_count; i++){
             // Wait for the acceptance
             sem_wait(&workshop_semaphore[i]);
         }
@@ -176,6 +179,25 @@ void *send_loop(void *id) {
 int main(int argc, char **argv) {
     MPI_Init(&argc, &argv);
 
+    if(argc == 1) {
+        // Set default parameters
+        workshops_count = 10;
+        workshops_capability = 1;
+        pyrkon_capability = 2;
+    } else if(argc == 4) {
+        workshops_count = atoi(argv[1]);
+        workshops_capability = atoi(argv[2]);
+        pyrkon_capability = atoi(argv[3]);
+    } else {
+        printf("Podaj 3 argumenty oznaczające liczbę warsztatów, pojemność warsztatów i pojemność Pyrkona\n");
+	return 1;
+    }
+    printf("%d %d %d\n", workshops_count, workshops_capability, pyrkon_capability);
+
+    workshop_mutex.resize(workshops_count+1);
+    workshop_semaphore.resize(workshops_count+1);
+    workshops.resize(workshops_count+1);
+
     // Get the number of processes
     MPI_Comm_rank(MPI_COMM_WORLD, &my_tid);        /* get current process id */
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
@@ -185,7 +207,7 @@ int main(int argc, char **argv) {
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
     pthread_mutex_init(&mutexClock, nullptr);
 
-    for(int i = 0; i <= WORKSHOPS_COUNT; i++){
+    for(int i = 0; i <= workshops_count; i++){
         workshops[i].id = i;
         pthread_mutex_init(&workshop_mutex[i], nullptr);
         sem_init(&workshop_semaphore[i], 0, 1);
@@ -249,7 +271,7 @@ int main(int argc, char **argv) {
             accepted_counter = workshops[queue_id].accepted_counter;
         } pthread_mutex_unlock(&workshop_mutex[queue_id]);
 
-        int capability = (packet.queue_id == 0) ? PYRKON_CAPABILITY : WORKSHOPS_CAPABILITY;
+        int capability = (packet.queue_id == 0) ? pyrkon_capability : workshops_capability;
         if(ahead_of >= world_size - capability){
             sem_post(&workshop_semaphore[queue_id]); //todo it unlocking many times
         }
