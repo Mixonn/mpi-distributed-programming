@@ -206,11 +206,15 @@ int main(int argc, char **argv) {
             } pthread_mutex_unlock(&mutexClock);
 
             if (packet.request_type == REQUEST_GET_WS) {
-                pthread_mutex_lock(&workshop_mutex[queue_id]);
+		Node *node;
+                pthread_mutex_lock(&mutexClock);
                 {
-                    Node *node = new Node(1, packet.tid, packet.clock_d);
+                    node = new Node(1, packet.tid, packet.clock_d);
+                } pthread_mutex_unlock(&mutexClock);
+
+                pthread_mutex_lock(&workshop_mutex[queue_id]);
                     workshops[queue_id].queue.put(node);
-                } pthread_mutex_unlock(&workshop_mutex[queue_id]);
+                pthread_mutex_unlock(&workshop_mutex[queue_id]);
 
                 pthread_mutex_lock(&mutexClock);
                 {
