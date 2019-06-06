@@ -1,9 +1,8 @@
-#include <mpi.h>
+#include "mpi.h"
 #include <unistd.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <string>
-#include <iostream>
 #include <random>
 #include <utility>
 #include <cmath>
@@ -133,7 +132,7 @@ void *send_loop(void *id) {
             workshops[0].queue.put(&node);
         } pthread_mutex_unlock(&workshop_mutex[0]);
 
-        pthread_mutex_lock(&mutexClock);
+        pthread_mutex_lock(&mutexClock); //chemy wejść do pytkona
         {
             send_to_all(0, REQUEST_GET_WS, clock_d);
             clock_d++;
@@ -157,19 +156,38 @@ void *send_loop(void *id) {
             Log::debug(my_tid, clock_d, "Drawn workshops: " + drawn_workshops);
             for (auto &it : workshops_to_visit) {
                 send_to_all(it.first, REQUEST_GET_WS, clock_d);
-                clock_d++;
             }
+            clock_d++;
         } pthread_mutex_unlock(&mutexClock);
+//tutaj wysłaliśmy do wszystkich, że chcemy wesć do wybranych workshopów
 
-        for (int i=1; i<=workshops_count; i++){
-            // Wait for the acceptance
-            sem_wait(&workshop_semaphore[i]);
-        }
 
-        for(auto &it: workshops_to_visit) {
-            // inside_workshop() deals with mutexes, no need for handling them here
-            inside_workshop(it.first);
-        }
+        //
+//
+//      pętla, po której sprawdzamy do którego można wejść:
+//      while(1):
+//          sem_wait(); //tutaj czekamy na odblokowanie
+//          szukajGdzieMożeszWejść():
+//                sleep(5)
+//                wyślij do wszystkich, że wyszedłeś()
+//                sprawdz, czyy byłeś już wszędzie, jak tak, to break;
+//
+//
+//
+//
+//           zakładamy semafor, jeśli reveive nam odblokuje, to znaczy, że możemy przejrzeć listę workshopów do których możemy wejść
+//           jeśli byliśmy już wszędzie gdzie chcieliśmy to break
+
+
+//        for (int i=1; i<=workshops_count; i++){
+//            // Wait for the acceptance
+//            sem_wait(&workshop_semaphore[i]);
+//            //tutaj wyszliśmy z workshopa
+//        }
+
+        //tutaj jesteśmy gdy byliśmy już we wszystkich workshopach
+
+
 
         sleep(300);
     }
