@@ -25,10 +25,11 @@ const int ACCEPT_GET_WS = 134;
 const int REQUEST_LOSE_WS = 233;
 
 std::vector<pthread_mutex_t> workshop_mutex;
-std::vector<sem_t> workshop_semaphore;
+sem_t pyrkon_semaphore, workshop_semaphore;
 pthread_mutex_t mutex_clock;
 
 std::vector<Event> workshops;
+std::vector<bool> visited;
 std::map<int, bool> workshops_to_visit; //todo: in the future we can mark it as <Event, bool>
 int clock_d = 1;
 int my_tid;
@@ -52,7 +53,7 @@ int get_random_number(int min, int max) {
 
 void reset_workshops_to_visit() {
     workshops_to_visit.clear();
-    // workshops_to_visit.insert(std::make_pair(0, false));
+    workshops_to_visit.insert(std::make_pair(0, false));
     int to_visit = 1; // TODO: change to get_random_number(1, workshops_count-1), handle workshops_count=1 case
     while(to_visit--) {
         int random_number;
@@ -86,7 +87,6 @@ Packet receive() {
     int arr[5] = { -2, -2, -2, -2, -2};
     int recv_status = MPI_Recv(arr, 5, MPI_INT, MPI_ANY_SOURCE, my_tid, MPI_COMM_WORLD, &req);
     assert(recv_status == MPI_SUCCESS);
-    printf("Received %d %d %d %d\n", arr[0], arr[1], arr[2], arr[3]);
 
     Packet packet(arr[0], arr[1], arr[2], arr[3]);
     Log::info(my_tid, clock_d, "Received " + packet.to_string());
@@ -142,7 +142,7 @@ void *send_loop(void *id) {
         } pthread_mutex_unlock(&mutex_clock);
 
         // Wait for all responses regarding Pyrkon event
-        sem_wait(&workshop_semaphore[0]);
+        sem_wait(&pyrkon_semaphore);
 
         pthread_mutex_lock(&mutex_clock);
         {
@@ -166,7 +166,7 @@ void *send_loop(void *id) {
 
         for(int i=0; i<(int)drawn_workshops.size(); ++i) {
             Log::info(my_tid, clock_d, "I am about to freeze and wait for the workshop");
-            sem_wait(&workshop_semaphore[i]);
+            sem_wait(&workshop_semaphore);
             Log::info(my_tid, clock_d, "I am getting unlocked and will get to the workshop just in a minute");
 
             int ws_to_visit = -1;
@@ -188,7 +188,11 @@ void *send_loop(void *id) {
 
         }
 
-        sleep(300); // TODO: detect the end of Pyrkon
+	pthread_mutex_lock(&mutex_clock);
+	{
+	    Log::info(my_tid, clock_d, "Finishing Pyrkon!");
+        } pthread_mutex_unlock(&mutex_clock);
+	return 0; // Finish Pyrkon TODO: implement never-ending Pyrkon
     }
 }
 
@@ -212,7 +216,7 @@ int main(int argc, char **argv) {
     printf("%d %d %d\n", workshops_count, workshops_capability, pyrkon_capability);
 
     workshop_mutex.resize(workshops_count+1);
-    workshop_semaphore.resize(workshops_count+1);
+    visited.resize(workshops_count+1);
     workshops.resize(workshops_count+1);
 
     // Get the number of processes
@@ -224,11 +228,12 @@ int main(int argc, char **argv) {
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
     pthread_mutex_init(&mutex_clock, nullptr);
 
+    sem_init(&pyrkon_semaphore, 0, 1);
+    sem_init(&workshop_semaphore, 0, 1);
+
     for(int i = 0; i <= workshops_count; i++) {
         workshops[i].id = i;
         pthread_mutex_init(&workshop_mutex[i], nullptr);
-        sem_init(&workshop_semaphore[i], 0, 1);
-        sem_wait(&workshop_semaphore[i]);
     }
 
     // Handle send_loop inside seperate thread
@@ -296,10 +301,12 @@ int main(int argc, char **argv) {
 	    Log::info(my_tid, -1, msg);
 
             if (queue_pos != -1 && packet.request_type == ACCEPT_GET_WS && ahead_of >= world_size - capability) {
-		    Node n = workshops[queue_id].queue.get(queue_pos);
-		    if(n.primary == 1) {
+		    if(!visited[queue_id]) {
+			visited[queue_id] = true;
 			Log::info(my_tid, -1, "Unblocking semaphore!!! :)");
-			sem_post(&workshop_semaphore[queue_id]);
+
+			if(queue_id == 0) sem_post(&pyrkon_semaphore);
+			else sem_post(&workshop_semaphore);
 		    }
             }
         }
