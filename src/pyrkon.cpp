@@ -167,7 +167,7 @@ void *send_loop(void *id) {
         for(int i=0; i<(int)drawn_workshops.size(); ++i) {
             Log::info(my_tid, clock_d, "I am about to freeze and wait for the workshop");
             sem_wait(&workshop_semaphore[i]);
-            Log::info(my_tid, clock_d, "I am getting unlocked and will get to the workshop just in a minute")
+            Log::info(my_tid, clock_d, "I am getting unlocked and will get to the workshop just in a minute");
 
             int ws_to_visit = -1;
             for(auto &it: workshops_to_visit) {
@@ -290,7 +290,7 @@ int main(int argc, char **argv) {
 
             int capability = (queue_id == 0) ? pyrkon_capability : workshops_capability;
 
-	    string msg = "Trying to wake up, queue_pos = " + std::to_string(queue_pos) + ", queue_size = " + std::to_string(queue_size) + ", ";
+	    std::string msg = "Trying to wake up, queue_pos = " + std::to_string(queue_pos) + ", queue_size = " + std::to_string(queue_size) + ", ";
 	    msg += "capability = " + std::to_string(capability) + ", ahead_of = " + std::to_string(ahead_of);
 	    Log::info(my_tid, clock_d, msg);
 
