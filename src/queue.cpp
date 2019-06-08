@@ -55,6 +55,10 @@ int PriorityQueue::get_pos(int tid) {
     return pos;
 }
 
+Node PriorityQueue::get(int pos) {
+	return vec[pos];
+}
+
 std::string PriorityQueue::to_string() {
     std::string result = "Size: " + std::to_string(get_size()) + "\n";
     for(auto &x: vec) result += x.to_string() + "\n";

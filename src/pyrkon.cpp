@@ -131,7 +131,7 @@ void *send_loop(void *id) {
     while (true) {
         pthread_mutex_lock(&workshop_mutex[0]); //add me to queue
         {
-            Node node(1, my_tid, clock_d);
+            Node node(1, clock_d, my_tid);
             workshops[0].queue.put(node);
         } pthread_mutex_unlock(&workshop_mutex[0]);
 
@@ -248,7 +248,7 @@ int main(int argc, char **argv) {
 		Node node(-1, -1, -1); // Will get initialized in the mutex
                 pthread_mutex_lock(&mutex_clock);
                 {
-                    node = Node(1, packet.tid, packet.clock_d);
+                    node = Node(1, packet.clock_d, packet.tid);
                 } pthread_mutex_unlock(&mutex_clock);
 
                 pthread_mutex_lock(&workshop_mutex[queue_id]);
@@ -276,7 +276,7 @@ int main(int argc, char **argv) {
                 {
                     workshops[queue_id].queue.pop(packet.tid);
 
-                    Node node(0, packet.tid, packet.clock_d);
+                    Node node(0, packet.clock_d, packet.tid);
                     workshops[queue_id].queue.put(node);
                 } pthread_mutex_unlock(&workshop_mutex[queue_id]);
             }
@@ -292,10 +292,15 @@ int main(int argc, char **argv) {
 
 	    std::string msg = "Trying to wake up, queue_pos = " + std::to_string(queue_pos) + ", queue_size = " + std::to_string(queue_size) + ", ";
 	    msg += "capability = " + std::to_string(capability) + ", ahead_of = " + std::to_string(ahead_of);
-	    Log::info(my_tid, clock_d, msg);
+	    msg += "request_type = " + std::to_string(packet.request_type);
+	    Log::info(my_tid, -1, msg);
 
             if (queue_pos != -1 && packet.request_type == ACCEPT_GET_WS && ahead_of >= world_size - capability) {
-                sem_post(&workshop_semaphore[queue_id]);
+		    Node n = workshops[queue_id].queue.get(queue_pos);
+		    if(n.primary == 1) {
+			Log::info(my_tid, -1, "Unblocking semaphore!!! :)");
+			sem_post(&workshop_semaphore[queue_id]);
+		    }
             }
         }
         pthread_mutex_unlock(&workshop_mutex[queue_id]);

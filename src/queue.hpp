@@ -31,6 +31,7 @@ public:
     int get_pos(int tid);
     std::string to_string();
     int get_size();
+    Node get(int pos);
 
 private:
     std::vector<Node> vec;
