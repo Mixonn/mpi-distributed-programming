@@ -53,7 +53,6 @@ int get_random_number(int min, int max) {
 
 void reset_workshops_to_visit() {
     workshops_to_visit.clear();
-    workshops_to_visit.insert(std::make_pair(0, false));
     int to_visit = 1; // TODO: change to get_random_number(1, workshops_count-1), handle workshops_count=1 case
     while(to_visit--) {
         int random_number;
@@ -165,9 +164,9 @@ void *send_loop(void *id) {
 
 
         for(int i=0; i<(int)drawn_workshops.size(); ++i) {
-            Log::info(my_tid, clock_d, "I am about to freeze and wait for the workshop");
+            Log::color_info(my_tid, clock_d, "I am about to freeze and wait for the workshop", ANSI_COLOR_MAGENTA);
             sem_wait(&workshop_semaphore);
-            Log::info(my_tid, clock_d, "I am getting unlocked and will get to the workshop just in a minute");
+            Log::color_info(my_tid, clock_d, "I am getting unlocked and will get to the workshop just in a minute", ANSI_COLOR_MAGENTA);
 
             int ws_to_visit = -1;
             for(auto &it: workshops_to_visit) {
@@ -228,8 +227,8 @@ int main(int argc, char **argv) {
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
     pthread_mutex_init(&mutex_clock, nullptr);
 
-    sem_init(&pyrkon_semaphore, 0, 1);
-    sem_init(&workshop_semaphore, 0, 1);
+    sem_init(&pyrkon_semaphore, 0, 0);
+    sem_init(&workshop_semaphore, 0, 0);
 
     for(int i = 0; i <= workshops_count; i++) {
         workshops[i].id = i;
@@ -296,7 +295,7 @@ int main(int argc, char **argv) {
             int capability = (queue_id == 0) ? pyrkon_capability : workshops_capability;
 
 	    std::string msg = "Trying to wake up, queue_pos = " + std::to_string(queue_pos) + ", queue_size = " + std::to_string(queue_size) + ", ";
-	    msg += "capability = " + std::to_string(capability) + ", ahead_of = " + std::to_string(ahead_of);
+	    msg += "capability = " + std::to_string(capability) + ", ahead_of = " + std::to_string(ahead_of) + ", ";
 	    msg += "request_type = " + std::to_string(packet.request_type);
 	    Log::info(my_tid, -1, msg);
 
