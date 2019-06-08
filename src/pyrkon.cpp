@@ -1,4 +1,4 @@
-#include <mpi.h>
+#include "mpi.h"
 #include <unistd.h>
 #include <pthread.h>
 #include <semaphore.h>
@@ -83,8 +83,10 @@ void mark_workshop_visited(int workshop_id){
 
 Packet receive() {
     MPI_Status req;
-    int arr[5] = { -2, -2, -2, -2, -2};
-    MPI_Recv(arr, 5, MPI_INT, MPI_ANY_SOURCE, my_tid, MPI_COMM_WORLD, &req);
+    int *arr = new int[5];
+    for(int i=0; i<5; i++) arr[i] = -2;
+    int recv_status = MPI_Recv(arr, 5, MPI_INT, MPI_ANY_SOURCE, my_tid, MPI_COMM_WORLD, &req);
+    assert(recv_status == MPI_SUCCESS);
     printf("Received %d %d %d %d\n", arr[0], arr[1], arr[2], arr[3]);
 
     Packet packet(arr[0], arr[1], arr[2], arr[3]);
@@ -94,10 +96,15 @@ Packet receive() {
 
 
 void send_to_tid(int receiver, int queue_id, int request_type, int sent_clk) {
-    int arr[] = {sent_clk, queue_id, my_tid, request_type, 0};
-    MPI_Request req;
+    int *arr = new int[5];
+    arr[0] = sent_clk;
+    arr[1] = queue_id;
+    arr[2] = my_tid;
+    arr[3] = request_type;
+    arr[4] = 0;
 
-    MPI_Isend(arr, 5, MPI_INT, receiver, receiver, MPI_COMM_WORLD, &req);
+    int status_send = MPI_Send(arr, 5, MPI_INT, receiver, my_tid, MPI_COMM_WORLD);
+    assert(status_send == MPI_SUCCESS);
 
     Packet packet(sent_clk, queue_id, my_tid, request_type);
     Log::info(my_tid, sent_clk, "\tSent to " + std::to_string(receiver) + ": " + packet.to_string());
@@ -130,7 +137,7 @@ void *send_loop(void *id) {
         pthread_mutex_lock(&workshop_mutex[0]); //add me to queue
         {
             Node node(1, my_tid, clock_d);
-            workshops[0].queue.put(&node);
+            workshops[0].queue.put(node);
         } pthread_mutex_unlock(&workshop_mutex[0]);
 
         pthread_mutex_lock(&mutex_clock); //chemy wejść do pytkona
@@ -233,7 +240,7 @@ int main(int argc, char **argv) {
 
     while (true) {
         Packet packet = receive();
-        int const queue_id = packet.queue_id;
+        const int queue_id = packet.queue_id;
         if(packet.tid != my_tid) {
             pthread_mutex_lock(&mutex_clock);
             {
@@ -241,13 +248,13 @@ int main(int argc, char **argv) {
             } pthread_mutex_unlock(&mutex_clock);
 
             if (packet.request_type == REQUEST_GET_WS) {
-		        Node *node;
                 pthread_mutex_lock(&mutex_clock);
                 {
-                    node = new Node(1, packet.tid, packet.clock_d);
+                    Node node = Node(1, packet.tid, packet.clock_d);
                 } pthread_mutex_unlock(&mutex_clock);
 
                 pthread_mutex_lock(&workshop_mutex[queue_id]);
+                    Node node = Node(1, packet.tid, packet.clock_d);
                     workshops[queue_id].queue.put(node);
                 pthread_mutex_unlock(&workshop_mutex[queue_id]);
 
@@ -271,7 +278,7 @@ int main(int argc, char **argv) {
                 {
                     workshops[queue_id].queue.pop(packet.tid);
 
-                    Node *node = new Node(0, packet.tid, packet.clock_d);
+                    Node node(0, packet.tid, packet.clock_d);
                     workshops[queue_id].queue.put(node);
                 } pthread_mutex_unlock(&workshop_mutex[queue_id]);
             }
