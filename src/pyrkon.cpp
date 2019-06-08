@@ -285,18 +285,20 @@ int main(int argc, char **argv) {
         }
 
         int ahead_of;
-        int accepted_counter;
-        pthread_mutex_lock(&workshop_mutex[queue_id]);
-        {
-            int queueSize = workshops[queue_id].queue.get_size();
-            int queuePos = workshops[queue_id].queue.get_pos(my_tid);
-            ahead_of = queueSize - queuePos - 1;
-            accepted_counter = workshops[queue_id].accepted_counter;
-        } pthread_mutex_unlock(&workshop_mutex[queue_id]);
+        bool wants_to_enter = workshops[queue_id].queue.get_pos(my_tid) != -1;
+        if(wants_to_enter) {
+            pthread_mutex_lock(&workshop_mutex[queue_id]);
+            {
+                int queueSize = workshops[queue_id].queue.get_size();
+                int queuePos = workshops[queue_id].queue.get_pos(my_tid);
+                ahead_of = queueSize - queuePos - 1;
+            }
+            pthread_mutex_unlock(&workshop_mutex[queue_id]);
 
-        int capability = (packet.queue_id == 0) ? pyrkon_capability : workshops_capability;
-        if(ahead_of >= world_size - capability){
-            sem_post(&workshop_semaphore[queue_id]);
+            int capability = (packet.queue_id == 0) ? pyrkon_capability : workshops_capability;
+            if (ahead_of >= world_size - capability) {
+                sem_post(&workshop_semaphore[queue_id]);
+            }
         }
     }
 

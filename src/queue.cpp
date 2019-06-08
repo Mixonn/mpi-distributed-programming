@@ -35,6 +35,8 @@ void PriorityQueue::put(Node node_to_add) {
 
 void PriorityQueue::pop(int tid) { //todo clear nodes from memory
     int pos = get_pos(tid);
+    assert(pos != -1);
+
     vec.erase(vec.begin() + pos);
 }
 
@@ -47,7 +49,6 @@ int PriorityQueue::get_pos(int tid) {
         }
     }
 
-    assert(pos != -1);
     return pos;
 }
 
