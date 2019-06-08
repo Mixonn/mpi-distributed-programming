@@ -83,8 +83,7 @@ void mark_workshop_visited(int workshop_id){
 
 Packet receive() {
     MPI_Status req;
-    int *arr = new int[5];
-    for(int i=0; i<5; i++) arr[i] = -2;
+    int arr[5] = { -2, -2, -2, -2, -2};
     int recv_status = MPI_Recv(arr, 5, MPI_INT, MPI_ANY_SOURCE, my_tid, MPI_COMM_WORLD, &req);
     assert(recv_status == MPI_SUCCESS);
     printf("Received %d %d %d %d\n", arr[0], arr[1], arr[2], arr[3]);
@@ -96,11 +95,7 @@ Packet receive() {
 
 
 void send_to_tid(int receiver, int queue_id, int request_type, int sent_clk) {
-    int *arr = new int[5];
-    arr[0] = sent_clk;
-    arr[1] = queue_id;
-    arr[2] = my_tid;
-    arr[3] = request_type;
+    int arr[] = {sent_clk, queue_id, my_tid, request_type, 0};
 
     MPI_Request req;
     int status_send = MPI_Send(arr, 5, MPI_INT, receiver, receiver, MPI_COMM_WORLD);
@@ -170,7 +165,9 @@ void *send_loop(void *id) {
 
 
         for(int i=0; i<(int)drawn_workshops.size(); ++i) {
+            Log::info(my_tid, clock_d, "I am about to freeze and wait for the workshop");
             sem_wait(&workshop_semaphore[i]);
+            Log::info(my_tid, clock_d, "I am getting unlocked and will get to the workshop just in a minute")
 
             int ws_to_visit = -1;
             for(auto &it: workshops_to_visit) {
@@ -285,11 +282,13 @@ int main(int argc, char **argv) {
         }
 
         int ahead_of;
+        int accepted_counter;
         pthread_mutex_lock(&workshop_mutex[queue_id]);
         {
             int queueSize = workshops[queue_id].queue.get_size();
             int queuePos = workshops[queue_id].queue.get_pos(my_tid);
             ahead_of = queueSize - queuePos - 1;
+            accepted_counter = workshops[queue_id].accepted_counter;
 
             int capability = (queue_id == 0) ? pyrkon_capability : workshops_capability;
             if (ahead_of >= world_size - capability) {
