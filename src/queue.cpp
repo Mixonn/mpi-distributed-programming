@@ -8,7 +8,10 @@
 Node::Node(int primary, int clk, int tid) : primary(primary), clk(clk), tid(tid), next_node(nullptr) { }
 
 std::string Node::to_string() {
-    return "clk: " + std::to_string(clk) + " tid: " + std::to_string(tid);
+    return "Node(primary=" + std::to_string(primary) +
+           ", clk=" + std::to_string(clk) +
+           ", tid: " + std::to_string(tid)
+           +")";
 }
 
 bool Node::operator<(const Node &to_compare) const {
