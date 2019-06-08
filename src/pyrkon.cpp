@@ -52,7 +52,7 @@ int get_random_number(int min, int max) {
 
 void reset_workshops_to_visit() {
     workshops_to_visit.clear();
-    workshops_to_visit.insert(std::make_pair(0, false));
+    // workshops_to_visit.insert(std::make_pair(0, false));
     int to_visit = 1; // TODO: change to get_random_number(1, workshops_count-1), handle workshops_count=1 case
     while(to_visit--) {
         int random_number;
@@ -101,9 +101,9 @@ void send_to_tid(int receiver, int queue_id, int request_type, int sent_clk) {
     arr[1] = queue_id;
     arr[2] = my_tid;
     arr[3] = request_type;
-    arr[4] = 0;
 
-    int status_send = MPI_Send(arr, 5, MPI_INT, receiver, my_tid, MPI_COMM_WORLD);
+    MPI_Request req;
+    int status_send = MPI_Send(arr, 5, MPI_INT, receiver, receiver, MPI_COMM_WORLD);
     assert(status_send == MPI_SUCCESS);
 
     Packet packet(sent_clk, queue_id, my_tid, request_type);
@@ -151,7 +151,7 @@ void *send_loop(void *id) {
 
         pthread_mutex_lock(&mutex_clock);
         {
-            Log::color_info(my_tid, clock_d, "Received all responses", ANSI_COLOR_MAGENTA);
+            Log::color_info(my_tid, clock_d, "I've got a Pyrkon ticket!", ANSI_COLOR_MAGENTA);
         } pthread_mutex_unlock(&mutex_clock);
 
         reset_workshops_to_visit();
@@ -227,7 +227,7 @@ int main(int argc, char **argv) {
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
     pthread_mutex_init(&mutex_clock, nullptr);
 
-    for(int i = 0; i <= workshops_count; i++){
+    for(int i = 0; i <= workshops_count; i++) {
         workshops[i].id = i;
         pthread_mutex_init(&workshop_mutex[i], nullptr);
         sem_init(&workshop_semaphore[i], 0, 1);
@@ -248,13 +248,13 @@ int main(int argc, char **argv) {
             } pthread_mutex_unlock(&mutex_clock);
 
             if (packet.request_type == REQUEST_GET_WS) {
+		Node node(-1, -1, -1); // Will get initialized in the mutex
                 pthread_mutex_lock(&mutex_clock);
                 {
-                    Node node = Node(1, packet.tid, packet.clock_d);
+                    node = Node(1, packet.tid, packet.clock_d);
                 } pthread_mutex_unlock(&mutex_clock);
 
                 pthread_mutex_lock(&workshop_mutex[queue_id]);
-                    Node node = Node(1, packet.tid, packet.clock_d);
                     workshops[queue_id].queue.put(node);
                 pthread_mutex_unlock(&workshop_mutex[queue_id]);
 
@@ -285,21 +285,18 @@ int main(int argc, char **argv) {
         }
 
         int ahead_of;
-        bool wants_to_enter = workshops[queue_id].queue.get_pos(my_tid) != -1;
-        if(wants_to_enter) {
-            pthread_mutex_lock(&workshop_mutex[queue_id]);
-            {
-                int queueSize = workshops[queue_id].queue.get_size();
-                int queuePos = workshops[queue_id].queue.get_pos(my_tid);
-                ahead_of = queueSize - queuePos - 1;
-            }
-            pthread_mutex_unlock(&workshop_mutex[queue_id]);
+        pthread_mutex_lock(&workshop_mutex[queue_id]);
+        {
+            int queueSize = workshops[queue_id].queue.get_size();
+            int queuePos = workshops[queue_id].queue.get_pos(my_tid);
+            ahead_of = queueSize - queuePos - 1;
 
-            int capability = (packet.queue_id == 0) ? pyrkon_capability : workshops_capability;
+            int capability = (queue_id == 0) ? pyrkon_capability : workshops_capability;
             if (ahead_of >= world_size - capability) {
                 sem_post(&workshop_semaphore[queue_id]);
             }
         }
+        pthread_mutex_unlock(&workshop_mutex[queue_id]);
     }
 
     // Finalize the MPI environment.
