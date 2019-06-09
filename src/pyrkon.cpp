@@ -29,7 +29,6 @@ sem_t pyrkon_semaphore, workshop_semaphore;
 pthread_mutex_t mutex_clock;
 
 std::vector<Event> workshops;
-std::vector<bool> visited;
 std::map<int, bool> workshops_to_visit; //todo: in the future we can mark it as <Event, bool>
 int clock_d = 1;
 int my_tid;
@@ -150,14 +149,14 @@ void *send_loop(void *id) {
             Log::color_info(my_tid, clock_d, "I've got a Pyrkon ticket!", ANSI_COLOR_MAGENTA);
         } pthread_mutex_unlock(&mutex_clock);
 
-	// Temporary
-	Log::color_info(my_tid, -1, "Wychodzę!", ANSI_COLOR_BLUE);
-	visited[0] = 0;
-	sleep(5);
+        // Temporary
+	/*
+        Log::color_info(my_tid, -1, "Wychodzę!", ANSI_COLOR_BLUE);
+        sleep(5);
         pthread_mutex_lock(&mutex_clock);
         {
-	    send_to_all(0, REQUEST_LOSE_WS, clock_d);
-	} pthread_mutex_unlock(&mutex_clock);
+            send_to_all(0, REQUEST_LOSE_WS, clock_d);
+        } pthread_mutex_unlock(&mutex_clock);*/
 
         reset_workshops_to_visit();
         std::string drawn_workshops;
@@ -226,7 +225,6 @@ int main(int argc, char **argv) {
     printf("%d %d %d\n", workshops_count, workshops_capability, pyrkon_capability);
 
     workshop_mutex.resize(workshops_count+1);
-    visited.resize(workshops_count+1);
     workshops.resize(workshops_count+1);
 
     // Get the number of processes
@@ -315,14 +313,10 @@ int main(int argc, char **argv) {
 	            ", request_type = " + std::to_string(packet.request_type);
 	    Log::info(my_tid, -1, msg);
         if (queue_pos != -1 && (packet.request_type == REQUEST_GET_WS || packet.request_type == REQUEST_LOSE_WS) && ahead_of >= world_size - capability) {
-            Log::info(my_tid, -1, "NO CHYBA MOGE WEJSC");
-            if(!visited[queue_id]) {
-                visited[queue_id] = true;
-                Log::color_info(my_tid, -1, "Unblocking semaphore!!! :)", ANSI_COLOR_BLUE);
+            Log::color_info(my_tid, -1, "Unblocking semaphore!!! :)", ANSI_COLOR_BLUE);
 
-                if(queue_id == 0) sem_post(&pyrkon_semaphore);
-                else sem_post(&workshop_semaphore);
-            }
+            if(queue_id == 0) sem_post(&pyrkon_semaphore);
+            else sem_post(&workshop_semaphore);
         } else {
             std::string tmp = "";
             if(queue_pos == -1){
