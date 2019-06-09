@@ -160,7 +160,7 @@ void *send_loop(void *id) {
         }
         pthread_mutex_lock(&mutex_clock);
         {
-            Log::debug(my_tid, clock_d, "Drawn workshops: " + drawn_workshops);
+            Log::debug(my_ti d, clock_d, "Drawn workshops: " + drawn_workshops);
             for (int i = 1; i <= workshops_count; i++){
                 if (workshops_to_visit.find(i) == workshops_to_visit.end()){
                     send_to_all(i, ACCEPT_GET_WS_REFUSE, clock_d);
@@ -295,13 +295,13 @@ int main(int argc, char **argv) {
                     workshops[queue_id].queue.put(node);
                 } pthread_mutex_unlock(&workshop_mutex[queue_id]);
             }
-            if(packet.request_type == ACCEPT_GET_WS_REFUSE){
-                pthread_mutex_lock(&workshop_mutex[queue_id]);
-                {
-                    Node node(0, packet.clock_d, packet.tid);
-                    workshops[queue_id].queue.put(node);
-                } pthread_mutex_unlock(&workshop_mutex[queue_id]);
-            }
+        }
+        if(packet.request_type == ACCEPT_GET_WS_REFUSE){
+            pthread_mutex_lock(&workshop_mutex[queue_id]);
+            {
+                Node node(0, packet.clock_d, packet.tid);
+                workshops[queue_id].queue.put(node);
+            } pthread_mutex_unlock(&workshop_mutex[queue_id]);
         }
 
         pthread_mutex_lock(&workshop_mutex[queue_id]);
