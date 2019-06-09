@@ -97,7 +97,7 @@ void send_to_tid(int receiver, int queue_id, int request_type, int sent_clk) {
     int arr[] = {sent_clk, queue_id, my_tid, request_type, 0};
 
     MPI_Request req;
-    int status_send = MPI_Isend(arr, 5, MPI_INT, receiver, receiver, MPI_COMM_WORLD, &req);
+    int status_send = MPI_Send(arr, 5, MPI_INT, receiver, receiver, MPI_COMM_WORLD);
     assert(status_send == MPI_SUCCESS);
 
     Packet packet(sent_clk, queue_id, my_tid, request_type);
@@ -249,14 +249,14 @@ int main(int argc, char **argv) {
             } pthread_mutex_unlock(&mutex_clock);
 
             if (packet.request_type == REQUEST_GET_WS) {
-		Node node(-1, -1, -1); // Will get initialized in the mutex
+		        Node node(-1, -1, -1); // Will get initialized in the mutex
                 pthread_mutex_lock(&mutex_clock);
                 {
                     node = Node(1, packet.clock_d, packet.tid);
                 } pthread_mutex_unlock(&mutex_clock);
 
                 pthread_mutex_lock(&workshop_mutex[queue_id]);
-		    Log::info(my_tid, clock_d, "Putting " + node.to_string() + " in " + std::to_string(queue_id) + "-th queue");
+		        Log::info(my_tid, clock_d, "Putting " + node.to_string() + " in " + std::to_string(queue_id) + "-th queue");
                     workshops[queue_id].queue.put(node);
                 pthread_mutex_unlock(&workshop_mutex[queue_id]);
 
@@ -294,20 +294,37 @@ int main(int argc, char **argv) {
 
             int capability = (queue_id == 0) ? pyrkon_capability : workshops_capability;
 
-	    std::string msg = "Trying to wake up, queue_pos = " + std::to_string(queue_pos) + ", queue_size = " + std::to_string(queue_size) + ", ";
-	    msg += "capability = " + std::to_string(capability) + ", ahead_of = " + std::to_string(ahead_of) + ", ";
-	    msg += "request_type = " + std::to_string(packet.request_type);
+	    std::string msg = "Trying to wake up" +
+	            std::string(", req type = ") + std::to_string(packet.request_type) +
+	            ", queue_pos = " + std::to_string(queue_pos) +
+	            ", queue_size = " + std::to_string(queue_size) +
+	            ", capability = " + std::to_string(capability) +
+	            ", ahead_of = " + std::to_string(ahead_of) +
+	            ", request_type = " + std::to_string(packet.request_type);
 	    Log::info(my_tid, -1, msg);
+        if (queue_pos != -1 && packet.request_type == REQUEST_GET_WS && ahead_of >= world_size - capability) {
+            Log::info(my_tid, -1, "NO CHYBA MOGE WEJSC");
+            if(!visited[queue_id]) {
+                visited[queue_id] = true;
+                Log::color_info(my_tid, -1, "Unblocking semaphore!!! :)", ANSI_COLOR_BLUE);
 
-            if (queue_pos != -1 && packet.request_type == ACCEPT_GET_WS && ahead_of >= world_size - capability) {
-		    if(!visited[queue_id]) {
-			visited[queue_id] = true;
-			Log::info(my_tid, -1, "Unblocking semaphore!!! :)");
-
-			if(queue_id == 0) sem_post(&pyrkon_semaphore);
-			else sem_post(&workshop_semaphore);
-		    }
+                if(queue_id == 0) sem_post(&pyrkon_semaphore);
+                else sem_post(&workshop_semaphore);
             }
+        } else {
+            std::string tmp = "";
+            if(queue_pos == -1){
+                tmp += std::string("queue_pos == -1\t");
+            }
+            if(packet.request_type != REQUEST_GET_WS){
+                tmp += std::string("packet.request_type != REQUEST_GET_WS\t");
+            }
+            if(ahead_of < world_size - capability){
+                tmp += std::string("ahead_of < world_size - capability\t");
+            }
+            Log::info(my_tid, -1, "Nie wchodzę, bo: " + tmp);
+        }
+
         }
         pthread_mutex_unlock(&workshop_mutex[queue_id]);
     }
