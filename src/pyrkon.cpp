@@ -311,34 +311,37 @@ int main(int argc, char **argv) {
             int ahead_of = queue_size - queue_pos - 1;
 
             int capability = (queue_id == 0) ? pyrkon_capability : workshops_capability;
+            int current_world_size = (queue_id == 0)? world_size : pyrkon_capability;
+            std::string msg = "Trying to wake up" +
+                    std::string(", req type = ") + std::to_string(packet.request_type) +
+                    ", queue_pos = " + std::to_string(queue_pos) +
+                    ", queue_size = " + std::to_string(queue_size) +
+                    ", capability = " + std::to_string(capability) +
+                    ", ahead_of = " + std::to_string(ahead_of) +
+                    ", request_type = " + std::to_string(packet.request_type);
+            Log::info(my_tid, -1, msg);
 
-	    std::string msg = "Trying to wake up" +
-	            std::string(", req type = ") + std::to_string(packet.request_type) +
-	            ", queue_pos = " + std::to_string(queue_pos) +
-	            ", queue_size = " + std::to_string(queue_size) +
-	            ", capability = " + std::to_string(capability) +
-	            ", ahead_of = " + std::to_string(ahead_of) +
-	            ", request_type = " + std::to_string(packet.request_type);
-	    Log::info(my_tid, -1, msg);
-        if (queue_pos != -1 && (packet.request_type == REQUEST_GET_WS || packet.request_type == REQUEST_LOSE_WS || packet.request_type == ACCEPT_GET_WS_REFUSE) && ahead_of >= world_size - capability) {
-            Log::color_info(my_tid, -1, "Unblocking semaphore!!! :)", ANSI_COLOR_BLUE);
+            if (queue_pos != -1 && (packet.request_type == REQUEST_GET_WS || packet.request_type == REQUEST_LOSE_WS || packet.request_type == ACCEPT_GET_WS_REFUSE) && ahead_of >= current_world_size - capability) {
+                Log::color_info(my_tid, -1, "Unblocking semaphore!!! :)", ANSI_COLOR_BLUE);
 
-            if(queue_id == 0) sem_post(&pyrkon_semaphore);
-            else sem_post(&workshop_semaphore);
-        } else {
-            std::string tmp = "";
-            if(queue_pos == -1){
-                tmp += std::string("queue_pos == -1\t");
+                if(queue_id == 0) sem_post(&pyrkon_semaphore);
+                else {
+                    Log::color_info("DUPA", ANSI_COLOR_GREEN);
+                    sem_post(&workshop_semaphore);
+                }
+            } else {
+                std::string tmp = "";
+                if(queue_pos == -1){
+                    tmp += std::string("queue_pos == -1\t");
+                }
+                if(packet.request_type != REQUEST_GET_WS){
+                    tmp += std::string("packet.request_type != REQUEST_GET_WS\t");
+                }
+                if(ahead_of < current_world_size - capability){
+                    tmp += std::string("ahead_of < world_size - capability\t");
+                }
+                Log::info(my_tid, -1, "Nie wchodzę, bo: " + tmp);
             }
-            if(packet.request_type != REQUEST_GET_WS){
-                tmp += std::string("packet.request_type != REQUEST_GET_WS\t");
-            }
-            if(ahead_of < world_size - capability){
-                tmp += std::string("ahead_of < world_size - capability\t");
-            }
-            Log::info(my_tid, -1, "Nie wchodzę, bo: " + tmp);
-        }
-
         }
         pthread_mutex_unlock(&workshop_mutex[queue_id]);
     }
