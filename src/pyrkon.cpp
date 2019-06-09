@@ -23,7 +23,7 @@ int workshops_capability;
 int pyrkon_capability;
 
 const int REQUEST_GET_WS = 133;
-const int ACCEPT_GET_WS_REFUSE = 135;
+const int REQUEST_GET_WS_REFUSE = 135;
 const int REQUEST_LOSE_WS = 233;
 
 std::vector<pthread_mutex_t> workshop_mutex;
@@ -83,7 +83,6 @@ void send_to_tid(int receiver, int queue_id, int request_type, int sent_clk) {
 
     int arr[] = {sent_clk, queue_id, my_tid, request_type, 0};
 
-    MPI_Request req;
     int status_send = MPI_Send(arr, 5, MPI_INT, receiver, receiver, MPI_COMM_WORLD);
     assert(status_send == MPI_SUCCESS);
 
@@ -110,12 +109,6 @@ void inside_workshop(int workshop_id) {
 
 void *send_loop(void *id) {
     while (true) {
-        pthread_mutex_lock(&workshop_mutex[0]); //add me to queue
-        {
-            Node node(1, clock_d, my_tid);
-            workshops[0].queue.put(node);
-        } pthread_mutex_unlock(&workshop_mutex[0]);
-
         pthread_mutex_lock(&clock_mutex);
         {
             send_to_all(0, REQUEST_GET_WS, clock_d);
@@ -129,30 +122,17 @@ void *send_loop(void *id) {
             Log::color_info(my_tid, clock_d, "I've got a Pyrkon ticket!", ANSI_COLOR_MAGENTA);
         } pthread_mutex_unlock(&clock_mutex);
 
-        reset_drawn_workshops();
-        std::string drawn_workshops_str;
-        for (auto & it : drawn_workshops) {
-            drawn_workshops_str += std::to_string(it) + ", ";
-        }
-        pthread_mutex_lock(&clock_mutex);
-        {
-            Log::debug(my_tid, clock_d, "Drawn workshops: " + drawn_workshops_str);
-            for (int i = 1; i <= workshops_count; i++){
-                if (std::find(drawn_workshops.begin(), drawn_workshops.end(), i) == drawn_workshops.end()) {
-                    send_to_all(i, ACCEPT_GET_WS_REFUSE, clock_d);
-                } else {
-                    send_to_all(i, REQUEST_GET_WS, clock_d);
-                }
-            }
-        } pthread_mutex_unlock(&clock_mutex);
-
-
 	while(true) {
-            Log::color_info(my_tid, -1, "I am about to freeze and wait for the workshop", ANSI_COLOR_MAGENTA);
+            pthread_mutex_lock(&clock_mutex);
+            {
+                Log::color_info(my_tid, clock_d, "I am about to freeze and wait for the workshop", ANSI_COLOR_MAGENTA);
+	    } pthread_mutex_unlock(&clock_mutex);
             sem_wait(&workshop_semaphore);
-            Log::color_info(my_tid, -1, "I am getting unlocked and will get to the workshop just in a minute", ANSI_COLOR_MAGENTA);
+            pthread_mutex_lock(&clock_mutex);
+            {
+                Log::color_info(my_tid, clock_d, "I am getting unlocked and will get to the workshop just in a minute", ANSI_COLOR_MAGENTA);
+	    } pthread_mutex_unlock(&clock_mutex);
 
-	    if(queued_workshops.empty()) break;
 	    int ws_was_visited = queued_workshops.front();
 	    queued_workshops.pop();
 
@@ -161,7 +141,10 @@ void *send_loop(void *id) {
             pthread_mutex_lock(&clock_mutex);
             {
                 send_to_all(ws_was_visited, REQUEST_LOSE_WS, clock_d);
+		Log::color_info(my_tid, clock_d, "Wysyłam do wszystkich że opuszczam workshop", ANSI_COLOR_RED);
             } pthread_mutex_unlock(&clock_mutex);
+
+	    if(queued_workshops.empty()) break;
         }
 
         pthread_mutex_lock(&clock_mutex);
@@ -169,7 +152,8 @@ void *send_loop(void *id) {
             send_to_all(0, REQUEST_LOSE_WS, clock_d);
 	    Log::info(my_tid, clock_d, "Finishing Pyrkon!");
         } pthread_mutex_unlock(&clock_mutex);
-	return 0; // Finish Pyrkon TODO: implement never-ending Pyrkon
+
+	MPI_Finalize();
     }
 }
 
@@ -217,11 +201,28 @@ int main(int argc, char **argv) {
     pthread_t threadId;
     pthread_create(&threadId, &attr, send_loop, nullptr);
 
+    reset_drawn_workshops();
+    std::string drawn_workshops_str;
+    for (auto & it : drawn_workshops) {
+        drawn_workshops_str += std::to_string(it) + ", ";
+    }
+    pthread_mutex_lock(&clock_mutex);
+    {
+        Log::debug(my_tid, clock_d, "Drawn workshops: " + drawn_workshops_str);
+        for (int i = 1; i <= workshops_count; i++){
+    	    if (std::find(drawn_workshops.begin(), drawn_workshops.end(), i) == drawn_workshops.end()) {
+    	        send_to_all(i, REQUEST_GET_WS_REFUSE, clock_d);
+    	    } else {
+    	        send_to_all(i, REQUEST_GET_WS, clock_d);
+    	    }
+        }
+    } pthread_mutex_unlock(&clock_mutex);
+
     while (true) {
         Packet packet = receive();
         const int queue_id = packet.queue_id;
 
-	if(my_tid != packet.tid) {
+	if(true) {
             pthread_mutex_lock(&clock_mutex);
             {
                 clock_d = std::max(clock_d, packet.clock_d) + 1;
@@ -251,9 +252,10 @@ int main(int argc, char **argv) {
                 } pthread_mutex_unlock(&workshop_mutex[queue_id]);
             }
             
-            if(packet.request_type == ACCEPT_GET_WS_REFUSE){
+            if(packet.request_type == REQUEST_GET_WS_REFUSE){
                 pthread_mutex_lock(&workshop_mutex[queue_id]);
                 {
+		    // TODO: remove if already exists
                     Node node(0, packet.clock_d, packet.tid);
 	            Log::info(my_tid, clock_d, "Putting ignored " + node.to_string() + " in " + std::to_string(queue_id) + "-th queue");
                     workshops[queue_id].queue.put(node);
@@ -270,32 +272,24 @@ int main(int argc, char **argv) {
                 int current_world_size = (queue_id == 0) ? world_size : std::min(pyrkon_capability, world_size);
                 std::string msg = "Trying to wake up" +
                         std::string(", req type = ") + std::to_string(packet.request_type) +
+			", queue_id = " + std::to_string(queue_id) +
                         ", queue_pos = " + std::to_string(queue_pos) +
                         ", queue_size = " + std::to_string(queue_size) +
                         ", capability = " + std::to_string(capability) +
                         ", ahead_of = " + std::to_string(ahead_of) +
                         ", request_type = " + std::to_string(packet.request_type) +
-	    	    ", visited[queue_id] = " + std::to_string(visited[queue_id]);
+	    	        ", visited[queue_id] = " + std::to_string(visited[queue_id]) + 
+			", kolejka: " + workshops[queue_id].queue.to_string();
                 Log::info(my_tid, -1, msg);
 
                 if (queue_pos != -1 && !visited[queue_id] && ahead_of >= current_world_size - capability) {
-	    	visited[queue_id] = true;
+	    	    visited[queue_id] = true;
                     if(queue_id == 0) sem_post(&pyrkon_semaphore);
                     else {
-	    	    printf("Dorzucamy do kolejki: %d\n", queue_id);
-	    	    queued_workshops.push(queue_id);
+	    	        printf("Dorzucamy do kolejki: %d\n", queue_id);
+	    	        queued_workshops.push(queue_id);
                         sem_post(&workshop_semaphore);
                     }
-                } else {
-                    std::string tmp = "";
-                    if(queue_pos == -1){
-                        tmp += std::string("queue_pos == -1\t");
-                    }
-	            tmp += "packet.request_type = " + std::to_string(packet.request_type) + "\t";
-                    if(ahead_of < current_world_size - capability){
-                        tmp += std::string("ahead_of < world_size - capability\t");
-                    }
-                    Log::info(my_tid, -1, "Nie wchodzę, bo: " + tmp + ", queue_id " + std::to_string(queue_id) + ", szukamy " + std::to_string(my_tid) + ", KOLEJKA = " + workshops[queue_id].queue.to_string());
                 }
             }
             pthread_mutex_unlock(&workshop_mutex[queue_id]);
