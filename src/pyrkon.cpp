@@ -22,6 +22,7 @@ int pyrkon_capability;
 
 const int REQUEST_GET_WS = 133;
 const int ACCEPT_GET_WS = 134;
+const int ACCEPT_GET_WS_REFUSE = 135;
 const int REQUEST_LOSE_WS = 233;
 
 std::vector<pthread_mutex_t> workshop_mutex;
@@ -120,12 +121,6 @@ void inside_workshop(int workshop_id) {
     } pthread_mutex_unlock(&mutex_clock);
 
     sleep(5);
-
-    pthread_mutex_lock(&mutex_clock);
-    {
-        Log::info(my_tid, clock_d, "Quitting workshop " + std::to_string(workshop_id));
-        send_to_all(workshop_id, REQUEST_LOSE_WS, clock_d);
-    } pthread_mutex_unlock(&mutex_clock);
 }
 
 void *send_loop(void *id) {
@@ -166,14 +161,17 @@ void *send_loop(void *id) {
         pthread_mutex_lock(&mutex_clock);
         {
             Log::debug(my_tid, clock_d, "Drawn workshops: " + drawn_workshops);
-            for (auto &it : workshops_to_visit) {
-                send_to_all(it.first, REQUEST_GET_WS, clock_d);
+            for (int i = 1; i <= workshops_count; i++){
+                if (workshops_to_visit.find(i) == workshops_to_visit.end()){
+                    send_to_all(i, ACCEPT_GET_WS_REFUSE, clock_d);
+                } else {
+                    send_to_all(i, REQUEST_GET_WS, clock_d);
+                }
             }
-            clock_d++;
         } pthread_mutex_unlock(&mutex_clock);
 
 
-        for(int i=0; i<(int)drawn_workshops.size(); ++i) {
+        while ((int)workshops_to_visit.size() > 0) {
             Log::color_info(my_tid, -1, "I am about to freeze and wait for the workshop", ANSI_COLOR_MAGENTA);
             sem_wait(&workshop_semaphore);
             Log::color_info(my_tid, -1, "I am getting unlocked and will get to the workshop just in a minute", ANSI_COLOR_MAGENTA);
@@ -189,10 +187,14 @@ void *send_loop(void *id) {
             if (ws_to_visit != -1) {
                 inside_workshop(ws_to_visit);
 
+                workshops_to_visit.erase(ws_to_visit);
+
                 pthread_mutex_lock(&mutex_clock);
                 {
                     send_to_all(ws_to_visit, REQUEST_LOSE_WS, clock_d);
                 } pthread_mutex_lock(&mutex_clock);
+            } else {
+                Log::error("This should not happend");
             }
 
         }
@@ -273,7 +275,6 @@ int main(int argc, char **argv) {
                 pthread_mutex_lock(&mutex_clock);
                 {
                     send_to_tid(packet.tid, queue_id, ACCEPT_GET_WS, clock_d);
-                    clock_d++;
                 } pthread_mutex_unlock(&mutex_clock);
             }
             if (packet.request_type == ACCEPT_GET_WS) {
@@ -290,6 +291,13 @@ int main(int argc, char **argv) {
                 {
                     workshops[queue_id].queue.pop(packet.tid);
 
+                    Node node(0, packet.clock_d, packet.tid);
+                    workshops[queue_id].queue.put(node);
+                } pthread_mutex_unlock(&workshop_mutex[queue_id]);
+            }
+            if(packet.request_type == ACCEPT_GET_WS_REFUSE){
+                pthread_mutex_lock(&workshop_mutex[queue_id]);
+                {
                     Node node(0, packet.clock_d, packet.tid);
                     workshops[queue_id].queue.put(node);
                 } pthread_mutex_unlock(&workshop_mutex[queue_id]);
@@ -312,7 +320,7 @@ int main(int argc, char **argv) {
 	            ", ahead_of = " + std::to_string(ahead_of) +
 	            ", request_type = " + std::to_string(packet.request_type);
 	    Log::info(my_tid, -1, msg);
-        if (queue_pos != -1 && (packet.request_type == REQUEST_GET_WS || packet.request_type == REQUEST_LOSE_WS) && ahead_of >= world_size - capability) {
+        if (queue_pos != -1 && (packet.request_type == REQUEST_GET_WS || packet.request_type == REQUEST_LOSE_WS || packet.request_type == ACCEPT_GET_WS_REFUSE) && ahead_of >= world_size - capability) {
             Log::color_info(my_tid, -1, "Unblocking semaphore!!! :)", ANSI_COLOR_BLUE);
 
             if(queue_id == 0) sem_post(&pyrkon_semaphore);
