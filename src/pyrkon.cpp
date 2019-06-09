@@ -77,7 +77,7 @@ void mark_workshop_visited(int workshop_id){
     }
 
     // This should not be reached
-    Log::warn(my_tid, clock_d, "Cannot mark workshop as visited because it should not be visited");
+    Log::warn(my_tid, -1, "Cannot mark workshop as visited because it should not be visited");
 
 }
 
@@ -88,12 +88,14 @@ Packet receive() {
     assert(recv_status == MPI_SUCCESS);
 
     Packet packet(arr[0], arr[1], arr[2], arr[3]);
-    Log::info(my_tid, clock_d, "Received " + packet.to_string());
     return packet;
 }
 
 
 void send_to_tid(int receiver, int queue_id, int request_type, int sent_clk) {
+    /* Requires locking mutex_clock */ 
+    clock_d++;
+
     int arr[] = {sent_clk, queue_id, my_tid, request_type, 0};
 
     MPI_Request req;
@@ -105,6 +107,7 @@ void send_to_tid(int receiver, int queue_id, int request_type, int sent_clk) {
 }
 
 void send_to_all(int queue_id, int request_type, int sent_clk) {
+    /* Requires locking mutex_clock */
     for (int i = 0; i < world_size; i++) {
         // we are sending request even to this same process because we need notify that queue changed
         send_to_tid(i, queue_id, request_type, sent_clk);
@@ -137,7 +140,6 @@ void *send_loop(void *id) {
         pthread_mutex_lock(&mutex_clock); //chemy wejść do pytkona
         {
             send_to_all(0, REQUEST_GET_WS, clock_d);
-            clock_d++;
         } pthread_mutex_unlock(&mutex_clock);
 
         // Wait for all responses regarding Pyrkon event
@@ -148,9 +150,10 @@ void *send_loop(void *id) {
             Log::color_info(my_tid, clock_d, "I've got a Pyrkon ticket!", ANSI_COLOR_MAGENTA);
         } pthread_mutex_unlock(&mutex_clock);
 
+	// Temporary
+	Log::color_info(my_tid, -1, "Wychodzę!", ANSI_COLOR_BLUE);
+	visited[0] = 0;
 	sleep(5);
-	printf("Wychodzę!");
-
         pthread_mutex_lock(&mutex_clock);
         {
 	    send_to_all(0, REQUEST_LOSE_WS, clock_d);
@@ -172,9 +175,9 @@ void *send_loop(void *id) {
 
 
         for(int i=0; i<(int)drawn_workshops.size(); ++i) {
-            Log::color_info(my_tid, clock_d, "I am about to freeze and wait for the workshop", ANSI_COLOR_MAGENTA);
+            Log::color_info(my_tid, -1, "I am about to freeze and wait for the workshop", ANSI_COLOR_MAGENTA);
             sem_wait(&workshop_semaphore);
-            Log::color_info(my_tid, clock_d, "I am getting unlocked and will get to the workshop just in a minute", ANSI_COLOR_MAGENTA);
+            Log::color_info(my_tid, -1, "I am getting unlocked and will get to the workshop just in a minute", ANSI_COLOR_MAGENTA);
 
             int ws_to_visit = -1;
             for(auto &it: workshops_to_visit) {
@@ -254,6 +257,7 @@ int main(int argc, char **argv) {
             pthread_mutex_lock(&mutex_clock);
             {
                 clock_d = std::max(clock_d, packet.clock_d) + 1;
+                Log::info(my_tid, clock_d, "Received " + packet.to_string());
             } pthread_mutex_unlock(&mutex_clock);
 
             if (packet.request_type == REQUEST_GET_WS) {
