@@ -148,6 +148,14 @@ void *send_loop(void *id) {
             Log::color_info(my_tid, clock_d, "I've got a Pyrkon ticket!", ANSI_COLOR_MAGENTA);
         } pthread_mutex_unlock(&mutex_clock);
 
+	sleep(5);
+	printf("Wychodzę!");
+
+        pthread_mutex_lock(&mutex_clock);
+        {
+	    send_to_all(0, REQUEST_LOSE_WS, clock_d);
+	} pthread_mutex_unlock(&mutex_clock);
+
         reset_workshops_to_visit();
         std::string drawn_workshops;
         for (auto & it : workshops_to_visit) {
@@ -302,7 +310,7 @@ int main(int argc, char **argv) {
 	            ", ahead_of = " + std::to_string(ahead_of) +
 	            ", request_type = " + std::to_string(packet.request_type);
 	    Log::info(my_tid, -1, msg);
-        if (queue_pos != -1 && packet.request_type == REQUEST_GET_WS && ahead_of >= world_size - capability) {
+        if (queue_pos != -1 && (packet.request_type == REQUEST_GET_WS || packet.request_type == REQUEST_LOSE_WS) && ahead_of >= world_size - capability) {
             Log::info(my_tid, -1, "NO CHYBA MOGE WEJSC");
             if(!visited[queue_id]) {
                 visited[queue_id] = true;
