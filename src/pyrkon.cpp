@@ -160,7 +160,7 @@ void *send_loop(void *id) {
         }
         pthread_mutex_lock(&mutex_clock);
         {
-            Log::debug(my_ti d, clock_d, "Drawn workshops: " + drawn_workshops);
+            Log::debug(my_tid, clock_d, "Drawn workshops: " + drawn_workshops);
             for (int i = 1; i <= workshops_count; i++){
                 if (workshops_to_visit.find(i) == workshops_to_visit.end()){
                     send_to_all(i, ACCEPT_GET_WS_REFUSE, clock_d);
@@ -196,11 +196,11 @@ void *send_loop(void *id) {
             } else {
                 Log::error("This should not happend");
             }
-
         }
 
-	pthread_mutex_lock(&mutex_clock);
-	{
+        pthread_mutex_lock(&mutex_clock);
+        {
+            send_to_all(0, REQUEST_LOSE_WS, clock_d);
 	    Log::info(my_tid, clock_d, "Finishing Pyrkon!");
         } pthread_mutex_unlock(&mutex_clock);
 	return 0; // Finish Pyrkon TODO: implement never-ending Pyrkon
@@ -334,13 +334,11 @@ int main(int argc, char **argv) {
                 if(queue_pos == -1){
                     tmp += std::string("queue_pos == -1\t");
                 }
-                if(packet.request_type != REQUEST_GET_WS){
-                    tmp += std::string("packet.request_type != REQUEST_GET_WS\t");
-                }
+	        tmp += "packet.request_type = " + std::to_string(packet.request_type) + "\t";
                 if(ahead_of < current_world_size - capability){
                     tmp += std::string("ahead_of < world_size - capability\t");
                 }
-                Log::info(my_tid, -1, "Nie wchodzę, bo: " + tmp);
+                Log::info(my_tid, -1, "Nie wchodzę, bo: " + tmp + ", queue_id " + std::to_string(queue_id) + ", szukamy " + std::to_string(my_tid) + ", KOLEJKA = " + workshops[queue_id].queue.to_string());
             }
         }
         pthread_mutex_unlock(&workshop_mutex[queue_id]);
