@@ -56,7 +56,8 @@ int get_random_number(int min, int max) {
 
 void reset_drawn_workshops() {
     drawn_workshops.clear();
-    int was_visited = 1; // TODO: change to get_random_number(1, workshops_count-1), handle workshops_count=1 case
+    int max_ws_to_go = (workshops_count > 1) ? workshops_count-1 : 1;
+    int was_visited = get_random_number(1, max_ws_to_go);
     while(was_visited--) {
         int random_number;
         do {
@@ -77,24 +78,24 @@ Packet receive() {
 }
 
 
-void send_to_tid(int receiver, int queue_id, int request_type, int sent_clk) {
+void send_to_tid(int receiver, int queue_id, int request_type) {
     /* Requires locking clock_mutex */ 
     clock_d++;
 
-    int arr[] = {sent_clk, queue_id, my_tid, request_type, 0};
+    int arr[] = {clock_d, queue_id, my_tid, request_type, 0};
 
     int status_send = MPI_Send(arr, 5, MPI_INT, receiver, receiver, MPI_COMM_WORLD);
     assert(status_send == MPI_SUCCESS);
 
-    Packet packet(sent_clk, queue_id, my_tid, request_type);
-    Log::info(my_tid, sent_clk, "\tSent to " + std::to_string(receiver) + ": " + packet.to_string());
+    Packet packet(clock_d, queue_id, my_tid, request_type);
+    Log::info(my_tid, clock_d-1, "\tSent to " + std::to_string(receiver) + ": " + packet.to_string());
 }
 
-void send_to_all(int queue_id, int request_type, int sent_clk) {
+void send_to_all(int queue_id, int request_type) {
     /* Requires locking clock_mutex */
     for (int i = 0; i < world_size; i++) {
         // we are sending request even to this same process because we need notify that queue changed
-        send_to_tid(i, queue_id, request_type, sent_clk);
+        send_to_tid(i, queue_id, request_type);
     }
 }
 
@@ -111,7 +112,7 @@ void *send_loop(void *id) {
     while (true) {
         pthread_mutex_lock(&clock_mutex);
         {
-            send_to_all(0, REQUEST_GET_WS, clock_d);
+            send_to_all(0, REQUEST_GET_WS);
         } pthread_mutex_unlock(&clock_mutex);
 
         // Wait for all responses regarding Pyrkon event
@@ -140,8 +141,8 @@ void *send_loop(void *id) {
 
             pthread_mutex_lock(&clock_mutex);
             {
-                send_to_all(ws_was_visited, REQUEST_LOSE_WS, clock_d);
 		Log::color_info(my_tid, clock_d, "Wysyłam do wszystkich że opuszczam workshop", ANSI_COLOR_RED);
+                send_to_all(ws_was_visited, REQUEST_LOSE_WS);
             } pthread_mutex_unlock(&clock_mutex);
 
 	    if(queued_workshops.empty()) break;
@@ -149,11 +150,9 @@ void *send_loop(void *id) {
 
         pthread_mutex_lock(&clock_mutex);
         {
-            send_to_all(0, REQUEST_LOSE_WS, clock_d);
 	    Log::info(my_tid, clock_d, "Finishing Pyrkon!");
+            send_to_all(0, REQUEST_LOSE_WS);
         } pthread_mutex_unlock(&clock_mutex);
-
-	MPI_Finalize();
     }
 }
 
@@ -211,9 +210,9 @@ int main(int argc, char **argv) {
         Log::debug(my_tid, clock_d, "Drawn workshops: " + drawn_workshops_str);
         for (int i = 1; i <= workshops_count; i++){
     	    if (std::find(drawn_workshops.begin(), drawn_workshops.end(), i) == drawn_workshops.end()) {
-    	        send_to_all(i, REQUEST_GET_WS_REFUSE, clock_d);
+    	        send_to_all(i, REQUEST_GET_WS_REFUSE);
     	    } else {
-    	        send_to_all(i, REQUEST_GET_WS, clock_d);
+    	        send_to_all(i, REQUEST_GET_WS);
     	    }
         }
     } pthread_mutex_unlock(&clock_mutex);
@@ -245,7 +244,14 @@ int main(int argc, char **argv) {
             if (packet.request_type == REQUEST_LOSE_WS) {
                 pthread_mutex_lock(&workshop_mutex[queue_id]);
                 {
-                    workshops[queue_id].queue.pop(packet.tid);
+		    int pos = workshops[queue_id].queue.get_pos(packet.tid);
+		    printf("Usuwam %d\n", pos);
+		    printf("%s\n", workshops[queue_id].queue.to_string().c_str());
+		    if(pos != -1) {
+                        workshops[queue_id].queue.pop(packet.tid);
+			printf("Usunąłem!\n");
+		    }
+		    printf("%s\n", workshops[queue_id].queue.to_string().c_str());
 
                     Node node(0, packet.clock_d, packet.tid);
                     workshops[queue_id].queue.put(node);
@@ -255,10 +261,13 @@ int main(int argc, char **argv) {
             if(packet.request_type == REQUEST_GET_WS_REFUSE){
                 pthread_mutex_lock(&workshop_mutex[queue_id]);
                 {
-		    // TODO: remove if already exists
+		    int pos = workshops[queue_id].queue.get_pos(packet.tid);
+		    if(pos != -1) {
+		        workshops[queue_id].queue.pop(packet.tid);
+		    }
                     Node node(0, packet.clock_d, packet.tid);
-	            Log::info(my_tid, clock_d, "Putting ignored " + node.to_string() + " in " + std::to_string(queue_id) + "-th queue");
                     workshops[queue_id].queue.put(node);
+	            Log::info(my_tid, clock_d, "Putting ignored " + node.to_string() + " in " + std::to_string(queue_id) + "-th queue");
                 } pthread_mutex_unlock(&workshop_mutex[queue_id]);
             }
 
@@ -280,7 +289,10 @@ int main(int argc, char **argv) {
                         ", request_type = " + std::to_string(packet.request_type) +
 	    	        ", visited[queue_id] = " + std::to_string(visited[queue_id]) + 
 			", kolejka: " + workshops[queue_id].queue.to_string();
-                Log::info(my_tid, -1, msg);
+                pthread_mutex_lock(&clock_mutex);
+                {
+			Log::info(my_tid, clock_d, msg);
+		} pthread_mutex_unlock(&clock_mutex);
 
                 if (queue_pos != -1 && !visited[queue_id] && ahead_of >= current_world_size - capability) {
 	    	    visited[queue_id] = true;

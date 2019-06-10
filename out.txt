@@ -1,0 +1,224 @@
+1 1 2
+1 1 2
+1 1 2
+[0m[INFO] id=2, clk=1	{	Sent to 0: clk: 1 queue_id: 0 tid: 2 request_type: 133}[0m
+[0m[INFO] id=2, clk=1	{	Sent to 1: clk: 1 queue_id: 0 tid: 2 request_type: 133}[0m
+[0m[INFO] id=1, clk=1	{	Sent to 0: clk: 1 queue_id: 0 tid: 1 request_type: 133}[0m
+[0m[INFO] id=1, clk=1	{	Sent to 1: clk: 1 queue_id: 0 tid: 1 request_type: 133}[0m
+[0m[INFO] id=0, clk=1	{	Sent to 0: clk: 1 queue_id: 0 tid: 0 request_type: 133}[0m
+[0m[INFO] id=1, clk=1	{	Sent to 2: clk: 1 queue_id: 0 tid: 1 request_type: 133}[0m
+[0m[INFO] id=0, clk=1	{	Sent to 1: clk: 1 queue_id: 0 tid: 0 request_type: 133}[0m
+[0m[INFO] id=0, clk=1	{	Sent to 2: clk: 1 queue_id: 0 tid: 0 request_type: 133}[0m
+[0m[INFO] id=0, clk=5	{Received clk: 1 queue_id: 0 tid: 0 request_type: 133}[0m
+[0m[INFO] id=0, clk=5	{Putting Node(primary=1, clk=1, tid: 0) in 0-th queue}[0m
+[0m[INFO] id=1, clk=5	{Received clk: 1 queue_id: 0 tid: 1 request_type: 133}[0m
+[0m[INFO] id=1, clk=5	{Putting Node(primary=1, clk=1, tid: 1) in 0-th queue}[0m
+[0m[INFO] id=1, clk=-1	{Trying to wake up, req type = 133, queue_pos = 0, queue_size = 2, capability = 2, ahead_of = 1, request_type = 133, visited[queue_id] = 0}[0m
+[0m[INFO] id=0, clk=-1	{Trying to wake up, req type = 133, queue_pos = 0, queue_size = 2, capability = 2, ahead_of = 1, request_type = 133, visited[queue_id] = 0}[0m
+[0m[INFO] id=2, clk=1	{	Sent to 2: clk: 1 queue_id: 0 tid: 2 request_type: 133}[0m
+[0m[INFO] id=1, clk=6	{Received clk: 1 queue_id: 0 tid: 2 request_type: 133}[0m
+[0m[INFO] id=1, clk=6	{Putting Node(primary=1, clk=1, tid: 2) in 0-th queue}[0m
+[0m[INFO] id=1, clk=-1	{Trying to wake up, req type = 133, queue_pos = 0, queue_size = 3, capability = 2, ahead_of = 2, request_type = 133, visited[queue_id] = 1}[0m
+[0m[INFO] id=0, clk=6	{Received clk: 1 queue_id: 0 tid: 1 request_type: 133}[0m
+[0m[INFO] id=0, clk=6	{Putting Node(primary=1, clk=1, tid: 1) in 0-th queue}[0m
+[0m[INFO] id=0, clk=-1	{Trying to wake up, req type = 133, queue_pos = 0, queue_size = 3, capability = 2, ahead_of = 2, request_type = 133, visited[queue_id] = 1}[0m
+[0m[INFO] id=1, clk=-1	{Nie wchodzę, bo: packet.request_type = 133	, queue_id 0, szukamy 1, KOLEJKA = Size: 3
+Node(primary=1, clk=1, tid: 1)
+Node(primary=1, clk=1, tid: 1)
+Node(primary=1, clk=1, tid: 2)
+}[0m
+[0m[INFO] id=1, clk=7	{Received clk: 1 queue_id: 0 tid: 0 request_type: 133}[0m
+[0m[INFO] id=0, clk=-1	{Nie wchodzę, bo: packet.request_type = 133	, queue_id 0, szukamy 0, KOLEJKA = Size: 3
+Node(primary=1, clk=1, tid: 0)
+Node(primary=1, clk=1, tid: 0)
+Node(primary=1, clk=1, tid: 1)
+}[0m
+[0m[INFO] id=0, clk=7	{Received clk: 1 queue_id: 0 tid: 2 request_type: 133}[0m
+[0m[INFO] id=0, clk=7	{Putting Node(primary=1, clk=1, tid: 2) in 0-th queue}[0m
+[0m[INFO] id=0, clk=-1	{Trying to wake up, req type = 133, queue_pos = 0, queue_size = 4, capability = 2, ahead_of = 3, request_type = 133, visited[queue_id] = 1}[0m
+[0m[INFO] id=1, clk=7	{Putting Node(primary=1, clk=1, tid: 0) in 0-th queue}[0m
+[0m[INFO] id=1, clk=-1	{Trying to wake up, req type = 133, queue_pos = 1, queue_size = 4, capability = 2, ahead_of = 2, request_type = 133, visited[queue_id] = 1}[0m
+[0m[INFO] id=1, clk=-1	{Nie wchodzę, bo: packet.request_type = 133	, queue_id 0, szukamy 1, KOLEJKA = Size: 4
+Node(primary=1, clk=1, tid: 0)
+Node(primary=1, clk=1, tid: 1)
+Node(primary=1, clk=1, tid: 1)
+Node(primary=1, clk=1, tid: 2)
+}[0m
+[0m[INFO] id=0, clk=-1	{Nie wchodzę, bo: packet.request_type = 133	, queue_id 0, szukamy 0, KOLEJKA = Size: 4
+Node(primary=1, clk=1, tid: 0)
+Node(primary=1, clk=1, tid: 0)
+Node(primary=1, clk=1, tid: 1)
+Node(primary=1, clk=1, tid: 2)
+}[0m
+[0m[INFO] id=2, clk=5	{Received clk: 1 queue_id: 0 tid: 2 request_type: 133}[0m
+[0m[INFO] id=2, clk=5	{Putting Node(primary=1, clk=1, tid: 2) in 0-th queue}[0m
+[0m[INFO] id=2, clk=-1	{Trying to wake up, req type = 133, queue_pos = 0, queue_size = 2, capability = 2, ahead_of = 1, request_type = 133, visited[queue_id] = 0}[0m
+[0m[INFO] id=2, clk=6	{Received clk: 1 queue_id: 0 tid: 1 request_type: 133}[0m
+[0m[INFO] id=2, clk=6	{Putting Node(primary=1, clk=1, tid: 1) in 0-th queue}[0m
+[0m[INFO] id=2, clk=-1	{Trying to wake up, req type = 133, queue_pos = 1, queue_size = 3, capability = 2, ahead_of = 1, request_type = 133, visited[queue_id] = 1}[0m
+[0m[INFO] id=2, clk=-1	{Nie wchodzę, bo: packet.request_type = 133	, queue_id 0, szukamy 2, KOLEJKA = Size: 3
+Node(primary=1, clk=1, tid: 1)
+Node(primary=1, clk=1, tid: 2)
+Node(primary=1, clk=1, tid: 2)
+}[0m
+[0m[INFO] id=2, clk=7	{Received clk: 1 queue_id: 0 tid: 0 request_type: 133}[0m
+[0m[INFO] id=2, clk=7	{Putting Node(primary=1, clk=1, tid: 0) in 0-th queue}[0m
+[0m[INFO] id=2, clk=-1	{Trying to wake up, req type = 133, queue_pos = 2, queue_size = 4, capability = 2, ahead_of = 1, request_type = 133, visited[queue_id] = 1}[0m
+[0m[INFO] id=2, clk=-1	{Nie wchodzę, bo: packet.request_type = 133	, queue_id 0, szukamy 2, KOLEJKA = Size: 4
+Node(primary=1, clk=1, tid: 0)
+Node(primary=1, clk=1, tid: 1)
+Node(primary=1, clk=1, tid: 2)
+Node(primary=1, clk=1, tid: 2)
+}[0m
+[35m[INFO] id=0, clk=7: I've got a Pyrkon ticket![0m
+[35m[INFO] id=1, clk=7: I've got a Pyrkon ticket![0m
+[35m[INFO] id=2, clk=7: I've got a Pyrkon ticket![0m
+[32m[DEBUG] id=1, clk=7	{Drawn workshops: 1, }[0m
+[0m[INFO] id=1, clk=7	{	Sent to 0: clk: 7 queue_id: 1 tid: 1 request_type: 133}[0m
+[32m[DEBUG] id=0, clk=7	{Drawn workshops: 1, }[0m
+[0m[INFO] id=0, clk=7	{	Sent to 0: clk: 7 queue_id: 1 tid: 0 request_type: 133}[0m
+[0m[INFO] id=0, clk=7	{	Sent to 1: clk: 7 queue_id: 1 tid: 0 request_type: 133}[0m
+[0m[INFO] id=0, clk=7	{	Sent to 2: clk: 7 queue_id: 1 tid: 0 request_type: 133}[0m
+[35m[INFO] id=0, clk=-1: I am about to freeze and wait for the workshop[0m
+[32m[DEBUG] id=2, clk=7	{Drawn workshops: 1, }[0m
+[0m[INFO] id=2, clk=7	{	Sent to 0: clk: 7 queue_id: 1 tid: 2 request_type: 133}[0m
+[0m[INFO] id=2, clk=7	{	Sent to 1: clk: 7 queue_id: 1 tid: 2 request_type: 133}[0m
+[0m[INFO] id=2, clk=7	{	Sent to 2: clk: 7 queue_id: 1 tid: 2 request_type: 133}[0m
+[35m[INFO] id=2, clk=-1: I am about to freeze and wait for the workshop[0m
+[0m[INFO] id=0, clk=11	{Received clk: 7 queue_id: 1 tid: 0 request_type: 133}[0m
+[0m[INFO] id=0, clk=11	{Putting Node(primary=1, clk=7, tid: 0) in 1-th queue}[0m
+[0m[INFO] id=0, clk=-1	{Trying to wake up, req type = 133, queue_pos = 0, queue_size = 1, capability = 1, ahead_of = 0, request_type = 133, visited[queue_id] = 0}[0m
+[0m[INFO] id=0, clk=-1	{Nie wchodzę, bo: packet.request_type = 133	ahead_of < world_size - capability	, queue_id 1, szukamy 0, KOLEJKA = Size: 1
+Node(primary=1, clk=7, tid: 0)
+}[0m
+[0m[INFO] id=0, clk=12	{Received clk: 7 queue_id: 1 tid: 1 request_type: 133}[0m
+[0m[INFO] id=0, clk=12	{Putting Node(primary=1, clk=7, tid: 1) in 1-th queue}[0m
+[0m[INFO] id=1, clk=7	{	Sent to 1: clk: 7 queue_id: 1 tid: 1 request_type: 133}[0m
+[0m[INFO] id=1, clk=7	{	Sent to 2: clk: 7 queue_id: 1 tid: 1 request_type: 133}[0m
+[35m[INFO] id=1, clk=-1: I am about to freeze and wait for the workshop[0m
+[0m[INFO] id=1, clk=11	{Received clk: 7 queue_id: 1 tid: 1 request_type: 133}[0m
+[0m[INFO] id=1, clk=11	{Putting Node(primary=1, clk=7, tid: 1) in 1-th queue}[0m
+[0m[INFO] id=1, clk=-1	{Trying to wake up, req type = 133, queue_pos = 0, queue_size = 1, capability = 1, ahead_of = 0, request_type = 133, visited[queue_id] = 0}[0m
+[0m[INFO] id=1, clk=-1	{Nie wchodzę, bo: packet.request_type = 133	ahead_of < world_size - capability	, queue_id 1, szukamy 1, KOLEJKA = Size: 1
+Node(primary=1, clk=7, tid: 1)
+}[0m
+[0m[INFO] id=1, clk=12	{Received clk: 7 queue_id: 1 tid: 2 request_type: 133}[0m
+[0m[INFO] id=1, clk=12	{Putting Node(primary=1, clk=7, tid: 2) in 1-th queue}[0m
+[0m[INFO] id=2, clk=11	{Received clk: 7 queue_id: 1 tid: 2 request_type: 133}[0m
+[0m[INFO] id=2, clk=11	{Putting Node(primary=1, clk=7, tid: 2) in 1-th queue}[0m
+[0m[INFO] id=2, clk=-1	{Trying to wake up, req type = 133, queue_pos = 0, queue_size = 1, capability = 1, ahead_of = 0, request_type = 133, visited[queue_id] = 0}[0m
+[0m[INFO] id=2, clk=-1	{Nie wchodzę, bo: packet.request_type = 133	ahead_of < world_size - capability	, queue_id 1, szukamy 2, KOLEJKA = Size: 1
+Node(primary=1, clk=7, tid: 2)
+}[0m
+[0m[INFO] id=1, clk=-1	{Trying to wake up, req type = 133, queue_pos = 0, queue_size = 2, capability = 1, ahead_of = 1, request_type = 133, visited[queue_id] = 0}[0m
+Dorzucamy do kolejki: 1
+[35m[INFO] id=1, clk=-1: I am getting unlocked and will get to the workshop just in a minute[0m
+[0m[INFO] id=1, clk=12	{Inside workshop 1}[0m
+[0m[INFO] id=1, clk=13	{Received clk: 7 queue_id: 1 tid: 0 request_type: 133}[0m
+[0m[INFO] id=1, clk=13	{Putting Node(primary=1, clk=7, tid: 0) in 1-th queue}[0m
+[0m[INFO] id=0, clk=-1	{Trying to wake up, req type = 133, queue_pos = 0, queue_size = 2, capability = 1, ahead_of = 1, request_type = 133, visited[queue_id] = 0}[0m
+Dorzucamy do kolejki: 1
+[35m[INFO] id=0, clk=-1: I am getting unlocked and will get to the workshop just in a minute[0m
+[0m[INFO] id=0, clk=12	{Inside workshop 1}[0m
+[0m[INFO] id=0, clk=13	{Received clk: 7 queue_id: 1 tid: 2 request_type: 133}[0m
+[0m[INFO] id=0, clk=13	{Putting Node(primary=1, clk=7, tid: 2) in 1-th queue}[0m
+[0m[INFO] id=1, clk=-1	{Trying to wake up, req type = 133, queue_pos = 1, queue_size = 3, capability = 1, ahead_of = 1, request_type = 133, visited[queue_id] = 1}[0m
+[0m[INFO] id=0, clk=-1	{Trying to wake up, req type = 133, queue_pos = 0, queue_size = 3, capability = 1, ahead_of = 2, request_type = 133, visited[queue_id] = 1}[0m
+[0m[INFO] id=0, clk=-1	{Nie wchodzę, bo: packet.request_type = 133	, queue_id 1, szukamy 0, KOLEJKA = Size: 3
+Node(primary=1, clk=7, tid: 0)
+Node(primary=1, clk=7, tid: 1)
+Node(primary=1, clk=7, tid: 2)
+}[0m
+[0m[INFO] id=2, clk=12	{Received clk: 7 queue_id: 1 tid: 1 request_type: 133}[0m
+[0m[INFO] id=2, clk=12	{Putting Node(primary=1, clk=7, tid: 1) in 1-th queue}[0m
+[0m[INFO] id=2, clk=-1	{Trying to wake up, req type = 133, queue_pos = 1, queue_size = 2, capability = 1, ahead_of = 0, request_type = 133, visited[queue_id] = 0}[0m
+[0m[INFO] id=2, clk=-1	{Nie wchodzę, bo: packet.request_type = 133	ahead_of < world_size - capability	, queue_id 1, szukamy 2, KOLEJKA = Size: 2
+Node(primary=1, clk=7, tid: 1)
+Node(primary=1, clk=7, tid: 2)
+}[0m
+[0m[INFO] id=1, clk=-1	{Nie wchodzę, bo: packet.request_type = 133	, queue_id 1, szukamy 1, KOLEJKA = Size: 3
+Node(primary=1, clk=7, tid: 0)
+Node(primary=1, clk=7, tid: 1)
+Node(primary=1, clk=7, tid: 2)
+}[0m
+[0m[INFO] id=2, clk=13	{Received clk: 7 queue_id: 1 tid: 0 request_type: 133}[0m
+[0m[INFO] id=2, clk=13	{Putting Node(primary=1, clk=7, tid: 0) in 1-th queue}[0m
+[0m[INFO] id=2, clk=-1	{Trying to wake up, req type = 133, queue_pos = 2, queue_size = 3, capability = 1, ahead_of = 0, request_type = 133, visited[queue_id] = 0}[0m
+[0m[INFO] id=2, clk=-1	{Nie wchodzę, bo: packet.request_type = 133	ahead_of < world_size - capability	, queue_id 1, szukamy 2, KOLEJKA = Size: 3
+Node(primary=1, clk=7, tid: 0)
+Node(primary=1, clk=7, tid: 1)
+Node(primary=1, clk=7, tid: 2)
+}[0m
+[0m[INFO] id=2, clk=14	{Received clk: 13 queue_id: 1 tid: 1 request_type: 233}[0m
+[0m[INFO] id=2, clk=-1	{Trying to wake up, req type = 233, queue_pos = 1, queue_size = 3, capability = 1, ahead_of = 1, request_type = 233, visited[queue_id] = 0}[0m
+[0m[INFO] id=0, clk=13	{	Sent to 0: clk: 13 queue_id: 1 tid: 0 request_type: 233}[0m
+[0m[INFO] id=0, clk=13	{	Sent to 1: clk: 13 queue_id: 1 tid: 0 request_type: 233}[0m
+[0m[INFO] id=0, clk=13	{	Sent to 2: clk: 13 queue_id: 1 tid: 0 request_type: 233}[0m
+[35m[INFO] id=0, clk=-1: I am about to freeze and wait for the workshop[0m
+[0m[INFO] id=0, clk=17	{Received clk: 13 queue_id: 1 tid: 0 request_type: 233}[0m
+[0m[INFO] id=0, clk=-1	{Trying to wake up, req type = 233, queue_pos = 2, queue_size = 3, capability = 1, ahead_of = 0, request_type = 233, visited[queue_id] = 1}[0m
+[0m[INFO] id=0, clk=-1	{Nie wchodzę, bo: packet.request_type = 233	ahead_of < world_size - capability	, queue_id 1, szukamy 0, KOLEJKA = Size: 3
+Node(primary=1, clk=7, tid: 1)
+Node(primary=1, clk=7, tid: 2)
+Node(primary=0, clk=13, tid: 0)
+}[0m
+[0m[INFO] id=0, clk=18	{Received clk: 13 queue_id: 1 tid: 1 request_type: 233}[0m
+[0m[INFO] id=0, clk=-1	{Trying to wake up, req type = 233, queue_pos = 1, queue_size = 3, capability = 1, ahead_of = 1, request_type = 233, visited[queue_id] = 1}[0m
+[0m[INFO] id=0, clk=-1	{Nie wchodzę, bo: packet.request_type = 233	, queue_id 1, szukamy 0, KOLEJKA = Size: 3
+Node(primary=1, clk=7, tid: 2)
+Node(primary=0, clk=13, tid: 0)
+Node(primary=0, clk=13, tid: 1)
+}[0m
+[0m[INFO] id=1, clk=13	{	Sent to 0: clk: 13 queue_id: 1 tid: 1 request_type: 233}[0m
+[0m[INFO] id=1, clk=13	{	Sent to 1: clk: 13 queue_id: 1 tid: 1 request_type: 233}[0m
+[0m[INFO] id=1, clk=13	{	Sent to 2: clk: 13 queue_id: 1 tid: 1 request_type: 233}[0m
+[35m[INFO] id=1, clk=-1: I am about to freeze and wait for the workshop[0m
+[0m[INFO] id=1, clk=17	{Received clk: 13 queue_id: 1 tid: 1 request_type: 233}[0m
+[0m[INFO] id=1, clk=-1	{Trying to wake up, req type = 233, queue_pos = 2, queue_size = 3, capability = 1, ahead_of = 0, request_type = 233, visited[queue_id] = 1}[0m
+[0m[INFO] id=1, clk=-1	{Nie wchodzę, bo: packet.request_type = 233	ahead_of < world_size - capability	, queue_id 1, szukamy 1, KOLEJKA = Size: 3
+Node(primary=1, clk=7, tid: 0)
+Node(primary=1, clk=7, tid: 2)
+Node(primary=0, clk=13, tid: 1)
+}[0m
+[0m[INFO] id=1, clk=18	{Received clk: 13 queue_id: 1 tid: 0 request_type: 233}[0m
+[0m[INFO] id=1, clk=-1	{Trying to wake up, req type = 233, queue_pos = 2, queue_size = 3, capability = 1, ahead_of = 0, request_type = 233, visited[queue_id] = 1}[0m
+[0m[INFO] id=1, clk=-1	{Nie wchodzę, bo: packet.request_type = 233	ahead_of < world_size - capability	, queue_id 1, szukamy 1, KOLEJKA = Size: 3
+Node(primary=1, clk=7, tid: 2)
+Node(primary=0, clk=13, tid: 0)
+Node(primary=0, clk=13, tid: 1)
+}[0m
+Dorzucamy do kolejki: 1
+[35m[INFO] id=2, clk=-1: I am getting unlocked and will get to the workshop just in a minute[0m
+[0m[INFO] id=2, clk=14	{Inside workshop 1}[0m
+[0m[INFO] id=2, clk=15	{Received clk: 13 queue_id: 1 tid: 0 request_type: 233}[0m
+[0m[INFO] id=2, clk=-1	{Trying to wake up, req type = 233, queue_pos = 0, queue_size = 3, capability = 1, ahead_of = 2, request_type = 233, visited[queue_id] = 1}[0m
+[0m[INFO] id=2, clk=-1	{Nie wchodzę, bo: packet.request_type = 233	, queue_id 1, szukamy 2, KOLEJKA = Size: 3
+Node(primary=1, clk=7, tid: 2)
+Node(primary=0, clk=13, tid: 0)
+Node(primary=0, clk=13, tid: 1)
+}[0m
+[0m[INFO] id=1, clk=19	{Received clk: 15 queue_id: 1 tid: 2 request_type: 233}[0m
+[0m[INFO] id=1, clk=-1	{Trying to wake up, req type = 233, queue_pos = 1, queue_size = 3, capability = 1, ahead_of = 1, request_type = 233, visited[queue_id] = 1}[0m
+[0m[INFO] id=1, clk=-1	{Nie wchodzę, bo: packet.request_type = 233	, queue_id 1, szukamy 1, KOLEJKA = Size: 3
+Node(primary=0, clk=13, tid: 0)
+Node(primary=0, clk=13, tid: 1)
+Node(primary=0, clk=15, tid: 2)
+}[0m
+[0m[INFO] id=0, clk=19	{Received clk: 15 queue_id: 1 tid: 2 request_type: 233}[0m
+[0m[INFO] id=0, clk=-1	{Trying to wake up, req type = 233, queue_pos = 0, queue_size = 3, capability = 1, ahead_of = 2, request_type = 233, visited[queue_id] = 1}[0m
+[0m[INFO] id=0, clk=-1	{Nie wchodzę, bo: packet.request_type = 233	, queue_id 1, szukamy 0, KOLEJKA = Size: 3
+Node(primary=0, clk=13, tid: 0)
+Node(primary=0, clk=13, tid: 1)
+Node(primary=0, clk=15, tid: 2)
+}[0m
+[0m[INFO] id=2, clk=15	{	Sent to 0: clk: 15 queue_id: 1 tid: 2 request_type: 233}[0m
+[0m[INFO] id=2, clk=15	{	Sent to 1: clk: 15 queue_id: 1 tid: 2 request_type: 233}[0m
+[0m[INFO] id=2, clk=15	{	Sent to 2: clk: 15 queue_id: 1 tid: 2 request_type: 233}[0m
+[35m[INFO] id=2, clk=-1: I am about to freeze and wait for the workshop[0m
+[0m[INFO] id=2, clk=19	{Received clk: 15 queue_id: 1 tid: 2 request_type: 233}[0m
+[0m[INFO] id=2, clk=-1	{Trying to wake up, req type = 233, queue_pos = 2, queue_size = 3, capability = 1, ahead_of = 0, request_type = 233, visited[queue_id] = 1}[0m
+[0m[INFO] id=2, clk=-1	{Nie wchodzę, bo: packet.request_type = 233	ahead_of < world_size - capability	, queue_id 1, szukamy 2, KOLEJKA = Size: 3
+Node(primary=0, clk=13, tid: 0)
+Node(primary=0, clk=13, tid: 1)
+Node(primary=0, clk=15, tid: 2)
+}[0m
